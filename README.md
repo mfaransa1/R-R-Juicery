@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# THE ROOK & REED JUICERY
 
-## Getting Started
+> **Good Juice. Good Music. Good Company.**
 
-First, run the development server:
+The official website and digital experience for **The Rook & Reed Juicery**, a premium organic juice house in Kilimani, Nairobi.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Rook & Reed brings together **fresh juice, chess, jazz, books, and community** under one roof — connecting the physical House with a modern interactive digital experience.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✦ What It Includes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+* 🥤 Fresh juice menu & online ordering
+* ♟️ Chess & SHoP community
+* 🎷 Jazz & music culture
+* 📚 Books & reading
+* 🌿 Ingredient & sourcing transparency
+* 🎥 Interactive juice-making experiences
+* 🛵 Nairobi delivery
+* 💳 M-Pesa payments
+* 👤 Customer accounts & rewards
+* 📊 Business & order management
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✦ Tech
 
-## Learn More
+Built with:
 
-To learn more about Next.js, take a look at the following resources:
+* **Next.js**
+* **TypeScript**
+* **Tailwind CSS**
+* **Motion**
+* **Supabase / PostgreSQL**
+* **M-Pesa Daraja API**
+* **Vercel**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ✦ The Experience
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The website is designed to feel like stepping into **The House** — warm, cinematic, editorial, interactive, and rooted in the culture of Rook & Reed.
 
-## Deploy on Vercel
+> **Mind. Soul. Body.**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Rook** — Chess & strategy
+**Reed** — Jazz & expression
+**Juicery** — Freshness & nourishment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ✦ Status
+
+🚧 **Currently in active development.**
+
+## ✦ Business
+
+**The Rook & Reed Juicery**
+Kilimani, Nairobi, Kenya
+
+**Hours:** 8:00 AM – 8:00 PM Daily
+**Phone / WhatsApp:** 0758038852
+**Email:** [rookreedjuicery@gmail.com](mailto:rookreedjuicery@gmail.com)
+**Instagram:** `@rookandreedjuicery`
+
+---
+
+### Good Juice. Good Music. Good Company.

@@ -1,28 +1,25 @@
-import Link from "next/link";
+import JournalHero from "@/components/journal/JournalHero";
+import JournalFeatured from "@/components/journal/JournalFeatured";
+import JournalGrid from "@/components/journal/JournalGrid";
+import JournalTopics from "@/components/journal/JournalTopics";
+import JournalLetter from "@/components/journal/JournalLetter";
+import JournalClosing from "@/components/journal/JournalClosing";
 
-export default function Page() {
+export const metadata = {
+  title: "Journal | The Rook & Reed Juicery",
+  description:
+    "Stories from The Rook & Reed — juice, ingredients, music, chess, books, culture and life around The House.",
+};
+
+export default function JournalPage() {
   return (
-    <main className="min-h-screen bg-[#f5f1e8] px-6 py-32 text-[#111111]">
-      <div className="mx-auto max-w-4xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
-          Rook & Reed Juicery
-        </p>
-
-        <h1 className="rr-editorial mt-6 text-6xl font-medium leading-none tracking-tight">
-          Coming soon.
-        </h1>
-
-        <p className="mt-6 max-w-lg text-black/60">
-          This part of the Rook & Reed experience is being built.
-        </p>
-
-        <Link
-          href="/"
-          className="rr-button rr-button-primary mt-8 inline-flex"
-        >
-          Back home
-        </Link>
-      </div>
+    <main>
+      <JournalHero />
+      <JournalFeatured />
+      <JournalGrid />
+      <JournalTopics />
+      <JournalLetter />
+      <JournalClosing />
     </main>
   );
 }

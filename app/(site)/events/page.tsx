@@ -1,28 +1,25 @@
-import Link from "next/link";
+import EventsHero from "@/components/events/EventsHero";
+import EventsFeature from "@/components/events/EventsFeature";
+import EventCalendar from "@/components/events/EventCalendar";
+import EventsHouse from "@/components/events/EventsHouse";
+import EventsInfo from "@/components/events/EventsInfo";
+import EventsClosing from "@/components/events/EventsClosing";
 
-export default function Page() {
+export const metadata = {
+  title: "Events | The Rook & Reed Juicery",
+  description:
+    "Music, chess, books, conversation and gatherings at The House in Kilimani.",
+};
+
+export default function EventsPage() {
   return (
-    <main className="min-h-screen bg-[#f5f1e8] px-6 py-32 text-[#111111]">
-      <div className="mx-auto max-w-4xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
-          Rook & Reed Juicery
-        </p>
-
-        <h1 className="rr-editorial mt-6 text-6xl font-medium leading-none tracking-tight">
-          Coming soon.
-        </h1>
-
-        <p className="mt-6 max-w-lg text-black/60">
-          This part of the Rook & Reed experience is being built.
-        </p>
-
-        <Link
-          href="/"
-          className="rr-button rr-button-primary mt-8 inline-flex"
-        >
-          Back home
-        </Link>
-      </div>
+    <main>
+      <EventsHero />
+      <EventsFeature />
+      <EventCalendar />
+      <EventsHouse />
+      <EventsInfo />
+      <EventsClosing />
     </main>
   );
 }

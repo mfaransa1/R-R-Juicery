@@ -1,28 +1,23 @@
-import Link from "next/link";
+import FAQHero from "@/components/faq/FAQHero";
+import FAQExplorer from "@/components/faq/FAQExplorer";
+import FAQTransparency from "@/components/faq/FAQTransparency";
+import FAQHouse from "@/components/faq/FAQHouse";
+import FAQClosing from "@/components/faq/FAQClosing";
 
-export default function Page() {
+export const metadata = {
+  title: "FAQ | The Rook & Reed Juicery",
+  description:
+    "Frequently asked questions about R&R juice, ingredients, orders, The House, events and visiting.",
+};
+
+export default function FAQPage() {
   return (
-    <main className="min-h-screen bg-[#f5f1e8] px-6 py-32 text-[#111111]">
-      <div className="mx-auto max-w-4xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
-          Rook & Reed Juicery
-        </p>
-
-        <h1 className="rr-editorial mt-6 text-6xl font-medium leading-none tracking-tight">
-          Coming soon.
-        </h1>
-
-        <p className="mt-6 max-w-lg text-black/60">
-          This part of the Rook & Reed experience is being built.
-        </p>
-
-        <Link
-          href="/"
-          className="rr-button rr-button-primary mt-8 inline-flex"
-        >
-          Back home
-        </Link>
-      </div>
+    <main>
+      <FAQHero />
+      <FAQExplorer />
+      <FAQTransparency />
+      <FAQHouse />
+      <FAQClosing />
     </main>
   );
 }

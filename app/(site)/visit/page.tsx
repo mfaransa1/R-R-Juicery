@@ -1,28 +1,27 @@
-import Link from "next/link";
+import VisitHero from "@/components/visit/VisitHero";
+import VisitDetails from "@/components/visit/VisitDetails";
+import VisitExperience from "@/components/visit/VisitExperience";
+import VisitMap from "@/components/visit/VisitMap";
+import VisitHouse from "@/components/visit/VisitHouse";
+import VisitContact from "@/components/visit/VisitContact";
+import VisitClosing from "@/components/visit/VisitClosing";
 
-export default function Page() {
+export const metadata = {
+  title: "Visit | The Rook & Reed Juicery",
+  description:
+    "Visit The Rook & Reed Juicery at Rook & Reed Plaza, Kilimani, Nairobi.",
+};
+
+export default function VisitPage() {
   return (
-    <main className="min-h-screen bg-[#f5f1e8] px-6 py-32 text-[#111111]">
-      <div className="mx-auto max-w-4xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
-          Rook & Reed Juicery
-        </p>
-
-        <h1 className="rr-editorial mt-6 text-6xl font-medium leading-none tracking-tight">
-          Coming soon.
-        </h1>
-
-        <p className="mt-6 max-w-lg text-black/60">
-          This part of the Rook & Reed experience is being built.
-        </p>
-
-        <Link
-          href="/"
-          className="rr-button rr-button-primary mt-8 inline-flex"
-        >
-          Back home
-        </Link>
-      </div>
+    <main>
+      <VisitHero />
+      <VisitDetails />
+      <VisitExperience />
+      <VisitMap />
+      <VisitHouse />
+      <VisitContact />
+      <VisitClosing />
     </main>
   );
 }

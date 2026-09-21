@@ -1,28 +1,27 @@
-import Link from "next/link";
+import ChessHero from "@/components/chess/ChessHero";
+import ChessIntro from "@/components/chess/ChessIntro";
+import ChessBoard from "@/components/chess/ChessBoard";
+import ChessSaturday from "@/components/chess/ChessSaturday";
+import ChessCommunity from "@/components/chess/ChessCommunity";
+import ChessGallery from "@/components/chess/ChessGallery";
+import ChessClosing from "@/components/chess/ChessClosing";
 
-export default function Page() {
+export const metadata = {
+  title: "Chess | SHoP | The Rook & Reed Juicery",
+  description:
+    "Chess, youth, learning, community and competition at The House in Kilimani.",
+};
+
+export default function ChessPage() {
   return (
-    <main className="min-h-screen bg-[#f5f1e8] px-6 py-32 text-[#111111]">
-      <div className="mx-auto max-w-4xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
-          Rook & Reed Juicery
-        </p>
-
-        <h1 className="rr-editorial mt-6 text-6xl font-medium leading-none tracking-tight">
-          Coming soon.
-        </h1>
-
-        <p className="mt-6 max-w-lg text-black/60">
-          This part of the Rook & Reed experience is being built.
-        </p>
-
-        <Link
-          href="/"
-          className="rr-button rr-button-primary mt-8 inline-flex"
-        >
-          Back home
-        </Link>
-      </div>
+    <main>
+      <ChessHero />
+      <ChessIntro />
+      <ChessBoard />
+      <ChessSaturday />
+      <ChessCommunity />
+      <ChessGallery />
+      <ChessClosing />
     </main>
   );
 }

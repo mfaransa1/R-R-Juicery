@@ -21,8 +21,10 @@ export const metadata: Metadata = {
     default: "Rook & Reed Juicery",
     template: "%s | Rook & Reed Juicery",
   },
+
   description:
     "Good Juice. Good Music. Good Company. An organic juicery and cultural space in Kilimani, Nairobi.",
+
   keywords: [
     "Rook & Reed Juicery",
     "organic juice Nairobi",
@@ -31,13 +33,42 @@ export const metadata: Metadata = {
     "jazz Nairobi",
     "Kilimani",
   ],
-  metadataBase: new URL("https://rookandreedjuicery.com"),
+
+  metadataBase: new URL("https://rookandreedjuicery.co.ke"),
+
+  manifest: "/site.webmanifest",
+
+  alternates: {
+    canonical: "https://rookandreedjuicery.co.ke",
+  },
+
+  authors: [
+    {
+      name: "Rook & Reed Juicery",
+    },
+  ],
+
+  creator: "Rook & Reed Juicery",
+  publisher: "Rook & Reed Juicery",
+
+  robots: {
+    index: true,
+    follow: true,
+  },
+
   openGraph: {
     title: "Rook & Reed Juicery",
     description:
       "Good Juice. Good Music. Good Company.",
     type: "website",
     locale: "en_KE",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Rook & Reed Juicery",
+    description:
+      "Good Juice. Good Music. Good Company.",
   },
 };
 

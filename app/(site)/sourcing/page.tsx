@@ -1,28 +1,33 @@
-import Link from "next/link";
+import SourcingHero from "@/components/sourcing/SourcingHero";
+import SourcingIntro from "@/components/sourcing/SourcingIntro";
+import SourcingJourney from "@/components/sourcing/SourcingJourney";
+import SourcingStandards from "@/components/sourcing/SourcingStandards";
+import SourcingMap from "@/components/sourcing/SourcingMap";
+import SourcingTraceability from "@/components/sourcing/SourcingTraceability";
+import SourcingClosing from "@/components/sourcing/SourcingClosing";
 
-export default function Page() {
+export const metadata = {
+  title: "Sourcing | The Rook & Reed Juicery",
+  description:
+    "Follow the journey from ingredient source to Rook & Reed juice.",
+};
+
+export default function SourcingPage() {
   return (
-    <main className="min-h-screen bg-[#f5f1e8] px-6 py-32 text-[#111111]">
-      <div className="mx-auto max-w-4xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/40">
-          Rook & Reed Juicery
-        </p>
+    <main>
+      <SourcingHero />
 
-        <h1 className="rr-editorial mt-6 text-6xl font-medium leading-none tracking-tight">
-          Coming soon.
-        </h1>
+      <SourcingIntro />
 
-        <p className="mt-6 max-w-lg text-black/60">
-          This part of the Rook & Reed experience is being built.
-        </p>
+      <SourcingJourney />
 
-        <Link
-          href="/"
-          className="rr-button rr-button-primary mt-8 inline-flex"
-        >
-          Back home
-        </Link>
-      </div>
+      <SourcingStandards />
+
+      <SourcingMap />
+
+      <SourcingTraceability />
+
+      <SourcingClosing />
     </main>
   );
 }
