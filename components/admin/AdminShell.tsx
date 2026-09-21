@@ -17,6 +17,7 @@ import {
   ShoppingBag,
   Store,
   X,
+  PackageCheck,
 } from "lucide-react";
 
 const navigation = [
@@ -55,6 +56,11 @@ const navigation = [
     href: "/admin/journal",
     icon: FileText,
   },
+  {
+  label: "Batches",
+  href: "/admin/batches",
+  icon: PackageCheck,
+},
   {
   label: "Settings",
   href: "/admin/settings",

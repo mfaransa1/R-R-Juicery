@@ -12,7 +12,7 @@ export default function AdminEvents() {
   const filtered =
     filter === "ALL"
       ? events
-      : events.filter((event) => event.owner === filter);
+      : events.filter((event) => event.identity === filter);
 
   return (
     <div className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8 lg:px-10 lg:py-12">
@@ -65,7 +65,7 @@ export default function AdminEvents() {
           >
             <div className="flex items-start justify-between">
               <span className="border border-black/10 px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.13em]">
-                {event.owner}
+                {event.identity}
               </span>
 
               <CalendarDays

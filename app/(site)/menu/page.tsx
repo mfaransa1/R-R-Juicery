@@ -1,8 +1,7 @@
 import MenuHero from "@/components/juice/MenuHero";
-import MenuDiscovery from "@/components/juice/MenuDiscovery";
 import MenuCategories from "@/components/juice/MenuCategories";
 import MenuTransparency from "@/components/juice/MenuTransparency";
-import { products } from "@/data/products";
+import SupabaseMenuProducts from "@/components/menu/SupabaseMenuProducts";
 
 export const metadata = {
   title: "Menu | The Rook & Reed Juicery",
@@ -15,9 +14,7 @@ export default function MenuPage() {
     <main>
       <MenuHero />
 
-      <div id="discover">
-        <MenuDiscovery products={products} />
-      </div>
+      <SupabaseMenuProducts />
 
       <MenuCategories />
 

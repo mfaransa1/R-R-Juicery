@@ -1,5 +1,6 @@
 import SiteHeader from "@/components/navigation/SiteHeader";
 import SiteFooter from "@/components/footer/SiteFooter";
+import { RRCartProvider } from "@/components/cart/RRCartProvider";
 
 export default function SiteLayout({
   children,
@@ -7,7 +8,7 @@ export default function SiteLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <RRCartProvider>
       <SiteHeader />
 
       <div className="min-h-screen">
@@ -15,6 +16,6 @@ export default function SiteLayout({
       </div>
 
       <SiteFooter />
-    </>
+    </RRCartProvider>
   );
 }
