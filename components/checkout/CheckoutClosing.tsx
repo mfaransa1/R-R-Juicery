@@ -2,16 +2,25 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "motion/react";
 
 export default function CheckoutClosing() {
   return (
     <section className="relative min-h-[48vh] overflow-hidden bg-black text-white">
-      <Image
-        src="/images/checkout/checkout-closing.jpg"
-        alt="Rook & Reed Juicery"
-        fill
-        className="object-cover"
-      />
+      <motion.div
+        className="absolute inset-0"
+        initial={{ scale: 1.02 }}
+        whileInView={{ scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.4, ease: "easeOut" }}
+      >
+        <Image
+          src="/images/checkout/checkout-closing.jpg"
+          alt="Rook & Reed Juicery"
+          fill
+          className="object-cover"
+        />
+      </motion.div>
 
       <div className="absolute inset-0 bg-black/60" />
 

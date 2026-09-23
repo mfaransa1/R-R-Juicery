@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
-import { initiateMpesaStkPush } from "@/lib/mpesa/server";
+import { initiateMpesaStkPush, MpesaApiError } from "@/lib/mpesa/server";
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -36,12 +35,9 @@ async function getAuthenticatedUser() {
 function getAdminSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const secret =
-    process.env.SUPABASE_SECRET_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY;
+    process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!url || !secret) {
-    throw new Error("Missing Supabase server credentials.");
-  }
+  if (!url || !secret) throw new Error("Missing Supabase server credentials.");
 
   return createSupabaseAdmin(url, secret, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -85,15 +81,19 @@ export async function POST(request: NextRequest) {
 
     const { data: order, error: orderError } = await admin
       .from("orders")
-      .select("id,order_number,customer_id,total,payment_status,status")
+      .select("id,order_number,customer_id,total,payment_method,payment_status,status")
       .eq("id", orderId)
       .eq("customer_id", user.id)
       .single();
 
     if (orderError || !order) {
+      return NextResponse.json({ error: "Order could not be found." }, { status: 404 });
+    }
+
+    if (order.payment_method !== "mpesa") {
       return NextResponse.json(
-        { error: "Order could not be found." },
-        { status: 404 },
+        { error: "This order is not configured for M-Pesa payment." },
+        { status: 409 },
       );
     }
 
@@ -102,6 +102,26 @@ export async function POST(request: NextRequest) {
         { error: "This order is already marked as paid." },
         { status: 409 },
       );
+    }
+
+    const { data: existing } = await admin
+      .from("payment_transactions")
+      .select("id,status,checkout_request_id,created_at")
+      .eq("order_id", order.id)
+      .eq("provider", "mpesa")
+      .in("status", ["initiated", "processing"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.checkout_request_id) {
+      return NextResponse.json({
+        success: true,
+        alreadyStarted: true,
+        paymentTransactionId: existing.id,
+        checkoutRequestId: existing.checkout_request_id,
+        customerMessage: "An M-Pesa payment request is already active. Check your phone and enter your PIN.",
+      });
     }
 
     const { data: transaction, error: transactionError } = await admin
@@ -125,21 +145,18 @@ export async function POST(request: NextRequest) {
         amount: Number(order.total),
         phone,
         accountReference: order.order_number || order.id.slice(0, 12),
-        transactionDesc: `R&R order ${order.order_number || order.id.slice(0, 8)}`,
+        transactionDesc: `RR order ${order.order_number || order.id.slice(0, 8)}`,
       });
 
       const { error: updateError } = await admin
         .from("payment_transactions")
         .update({
-          status:
-            stk.ResponseCode === "0" ? "processing" : "failed",
+          status: "processing",
           merchant_request_id: stk.MerchantRequestID || null,
           checkout_request_id: stk.CheckoutRequestID || null,
           result_code: stk.ResponseCode || null,
           result_description:
-            stk.ResponseDescription ||
-            stk.CustomerMessage ||
-            null,
+            stk.ResponseDescription || stk.CustomerMessage || null,
           raw_response: stk,
           updated_at: new Date().toISOString(),
         })
@@ -147,37 +164,39 @@ export async function POST(request: NextRequest) {
 
       if (updateError) throw updateError;
 
-      if (stk.ResponseCode !== "0") {
-        return NextResponse.json(
-          {
-            error:
-              stk.ResponseDescription ||
-              stk.CustomerMessage ||
-              "M-Pesa could not start the payment request.",
-          },
-          { status: 400 },
-        );
-      }
-
       return NextResponse.json({
         success: true,
         paymentTransactionId: transaction.id,
         merchantRequestId: stk.MerchantRequestID || null,
         checkoutRequestId: stk.CheckoutRequestID || null,
         customerMessage:
-          stk.CustomerMessage ||
-          "Check your phone and enter your M-Pesa PIN.",
+          stk.CustomerMessage || "Check your phone and enter your M-Pesa PIN.",
       });
     } catch (error) {
+      const providerResponse =
+        error instanceof MpesaApiError ? error.providerResponse : null;
+      const message =
+        error instanceof Error ? error.message : "STK request failed.";
+
       await admin
         .from("payment_transactions")
         .update({
           status: "failed",
-          result_description:
-            error instanceof Error ? error.message : "STK request failed.",
+          result_description: message,
+          raw_response: providerResponse,
           updated_at: new Date().toISOString(),
         })
         .eq("id", transaction.id);
+
+      if (error instanceof MpesaApiError) {
+        return NextResponse.json(
+          {
+            error: message,
+            provider: providerResponse,
+          },
+          { status: error.status >= 400 && error.status < 600 ? error.status : 502 },
+        );
+      }
 
       throw error;
     }

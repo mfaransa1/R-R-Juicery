@@ -15,21 +15,28 @@ export default function CartButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="relative inline-flex h-10 w-10 items-center justify-center"
+        className="relative inline-flex h-10 w-10 items-center justify-center !text-current transition-opacity hover:opacity-65"
         aria-label={`Open basket${
-          itemCount ? `, ${itemCount} ${itemCount === 1 ? "item" : "items"}` : ""
+          itemCount
+            ? `, ${itemCount} ${
+                itemCount === 1 ? "item" : "items"
+              }`
+            : ""
         }`}
       >
         <ShoppingBag className="h-5 w-5" />
 
         {itemCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-[9px] font-semibold !text-white">
             {itemCount}
           </span>
         )}
       </button>
 
-      <CartDrawer open={open} onClose={() => setOpen(false)} />
+      <CartDrawer
+        open={open}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 }

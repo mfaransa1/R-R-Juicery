@@ -15,7 +15,9 @@ type Props = {
   };
 };
 
-export default function AddToCartButton({ product }: Props) {
+export default function AddToCartButton({
+  product,
+}: Props) {
   const { addItem } = useRRCart();
   const [added, setAdded] = useState(false);
 
@@ -28,17 +30,26 @@ export default function AddToCartButton({ product }: Props) {
       size: product.size,
       imagePath: product.image_path,
     });
+
     setAdded(true);
-    window.setTimeout(() => setAdded(false), 1400);
+
+    window.setTimeout(() => {
+      setAdded(false);
+    }, 1400);
   }
 
   return (
     <button
       type="button"
       onClick={handleAdd}
-      className="inline-flex items-center gap-2 border border-black bg-black px-5 py-3 text-sm font-semibold uppercase tracking-[0.14em] text-white transition hover:bg-white hover:text-black"
+      className="inline-flex min-h-11 items-center justify-center gap-2 border border-black bg-black px-5 py-3 text-sm font-semibold uppercase tracking-[0.14em] !text-white transition hover:bg-white hover:!text-black active:scale-[0.99]"
     >
-      {added ? <Check size={16} /> : <Plus size={16} />}
+      {added ? (
+        <Check size={16} />
+      ) : (
+        <Plus size={16} />
+      )}
+
       {added ? "Added" : "Add to move"}
     </button>
   );

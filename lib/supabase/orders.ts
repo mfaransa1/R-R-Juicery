@@ -11,7 +11,7 @@ export type OrderStatus =
   | "cancelled";
 
 export type FulfillmentType = "pickup" | "delivery";
-export type PaymentMethod = "mpesa" | "card" | "cash";
+export type PaymentMethod = "mpesa" | "cash";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
 export type AdminOrder = {

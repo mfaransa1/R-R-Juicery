@@ -70,7 +70,7 @@ export default function AccountRewardsContent() {
   return (
     <main className="min-h-screen bg-[#f5f1e8] px-5 pb-20 pt-28 lg:px-10 lg:pt-36">
       <div className="mx-auto max-w-[1200px]">
-        <Link href="/account" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/40 hover:text-black">
+        <Link href="/account" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] !text-black/40 hover:!text-black">
           <ArrowLeft size={14} /> Passport
         </Link>
 
@@ -101,7 +101,7 @@ export default function AccountRewardsContent() {
         <section className="mt-14">
           <div className="flex items-end justify-between border-b border-black/10 pb-4">
             <div><p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-black/35">REWARDS</p><h2 className="mt-2 font-serif text-3xl">Choose your next reward</h2></div>
-            <button onClick={async()=>{setRefreshing(true);await load();}} disabled={refreshing} className="inline-flex items-center gap-2 border border-black/10 bg-white px-4 py-2.5 text-xs font-medium hover:bg-black hover:text-white disabled:opacity-50"><RefreshCw size={14} className={refreshing?"animate-spin":""}/>Refresh</button>
+            <button onClick={async()=>{setRefreshing(true);await load();}} disabled={refreshing} className="inline-flex items-center gap-2 border border-black/10 bg-white px-4 py-2.5 text-xs font-medium !text-black hover:bg-black hover:!text-white disabled:opacity-50"><RefreshCw size={14} className={refreshing?"animate-spin":""}/>Refresh</button>
           </div>
 
           <div className="mt-2 grid gap-px border border-black/10 bg-black/10 md:grid-cols-3">
@@ -111,7 +111,7 @@ export default function AccountRewardsContent() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/35">{reward.move_cost} MOVES</p>
                 <h3 className="mt-8 font-serif text-3xl tracking-[-0.03em]">{reward.name}</h3>
                 <p className="mt-3 min-h-12 text-sm leading-6 text-black/45">{reward.description}</p>
-                <button onClick={()=>redeem(reward.id)} disabled={!canRedeem || redeeming===reward.id} className={`mt-8 inline-flex w-full items-center justify-between border px-4 py-3 text-sm ${canRedeem?"border-black bg-black text-white hover:opacity-80":"border-black/10 bg-black/[0.03] text-black/30"}`}>
+                <button onClick={()=>redeem(reward.id)} disabled={!canRedeem || redeeming===reward.id} className={`mt-8 inline-flex w-full items-center justify-between border px-4 py-3 text-sm ${canRedeem?"border-black bg-black !text-white hover:bg-[#292929] hover:!text-white":"border-black/10 bg-black/[0.03] !text-black/30"}`}>
                   <span>{redeeming===reward.id?"Redeeming…":canRedeem?"Redeem reward":"Keep moving"}</span>
                   <ChevronRight size={15}/>
                 </button>

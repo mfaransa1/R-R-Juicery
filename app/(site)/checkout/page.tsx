@@ -12,17 +12,18 @@ export const metadata = {
 
 export default function CheckoutPage() {
   return (
-    <main>
+    <main className="bg-[var(--rr-paper)]">
       <CheckoutHero />
 
-      <section className="bg-[#f5f1e8] py-20 text-[#111] lg:py-28">
-        <div className="mx-auto grid max-w-[1200px] gap-12 px-5 sm:px-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-14">
+      <section className="bg-[var(--rr-paper)] py-16 text-[#111] sm:py-20 lg:py-28">
+        <div className="mx-auto grid max-w-[1200px] gap-10 px-5 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14 lg:px-10">
           <LiveCheckoutForm />
           <LiveCheckoutSummary />
         </div>
       </section>
 
       <CheckoutTrust />
+
       <CheckoutClosing />
     </main>
   );
