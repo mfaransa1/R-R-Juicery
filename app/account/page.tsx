@@ -1,6 +1,8 @@
 import AccountHero from "@/components/account/AccountHero";
 import AccountMain from "@/components/account/AccountMain";
+import AccountQuickLinks from "@/components/account/AccountQuickLinks";
 import AccountMoves from "@/components/account/AccountMoves";
+import AccountContact from "@/components/account/AccountContact";
 import AccountClosing from "@/components/account/AccountClosing";
 
 export const metadata = {
@@ -14,7 +16,9 @@ export default function AccountPage() {
     <main>
       <AccountHero />
       <AccountMain />
+      <AccountQuickLinks />
       <AccountMoves />
+      <AccountContact />
       <AccountClosing />
     </main>
   );

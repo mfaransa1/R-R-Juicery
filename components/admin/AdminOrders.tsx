@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
@@ -357,13 +358,22 @@ export default function AdminOrders() {
                     </td>
 
                     <td className="px-5 py-5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => void openOrder(order)}
-                        className="border border-black/15 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] hover:border-black"
-                      >
-                        View
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="border border-black/15 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] hover:border-black"
+                        >
+                          Details
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => void openOrder(order)}
+                          className="border border-black/15 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] hover:border-black"
+                        >
+                          Quick View
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

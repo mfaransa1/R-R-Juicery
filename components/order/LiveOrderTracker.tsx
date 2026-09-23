@@ -1,3 +1,4 @@
+/* Replace components/order/LiveOrderTracker.tsx with this version. */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -34,7 +35,7 @@ const stageIndex: Record<string, number> = {
 };
 
 function money(value: number) {
-  return `KSh ${Number(value).toLocaleString()}`;
+  return `KSh ${Number(value).toLocaleString("en-KE")}`;
 }
 
 export default function LiveOrderTracker() {
@@ -45,6 +46,7 @@ export default function LiveOrderTracker() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [live, setLive] = useState(false);
+  const [linkedFromHistory, setLinkedFromHistory] = useState(false);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
 
@@ -53,19 +55,23 @@ export default function LiveOrderTracker() {
       unsubscribeFromOrder(channelRef.current);
       channelRef.current = null;
     }
-
     setLive(false);
   }
 
   async function loadOrder(id: string, showLoading = true) {
+    if (!id.trim()) return;
+
     if (showLoading) setLoading(true);
     else setRefreshing(true);
 
     try {
-      const found = await getMyOrder(id);
+      const found = await getMyOrder(id.trim());
       const foundItems = await getMyOrderItems(found.id);
 
       setOrder(found);
+      // Keep the customer-facing R&R reference in the field rather than
+      // replacing it with the internal Supabase UUID.
+      setOrderId(found.order_number ?? found.id);
       setItems(foundItems);
       setError("");
 
@@ -80,8 +86,8 @@ export default function LiveOrderTracker() {
           setItems(updatedItems);
           setLive(true);
         } catch {
-          // The next manual refresh can recover if the realtime event
-          // arrives while the session is changing.
+          // Manual refresh remains available if a realtime event arrives
+          // while the authentication/session state is changing.
         }
       });
 
@@ -110,11 +116,22 @@ export default function LiveOrderTracker() {
   }
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linkedOrder = params.get("order");
+
+    if (linkedOrder?.trim()) {
+      setLinkedFromHistory(true);
+      setOrderId(linkedOrder.trim());
+      void loadOrder(linkedOrder.trim());
+    }
+
     return () => {
       if (channelRef.current) {
         unsubscribeFromOrder(channelRef.current);
       }
     };
+    // The initial URL lookup intentionally runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const currentIndex =
@@ -140,28 +157,45 @@ export default function LiveOrderTracker() {
               details are visible only to the signed-in account that placed it.
             </p>
 
-            <div className="mt-9 flex max-w-md flex-col gap-3 sm:flex-row">
-              <input
+            {!linkedFromHistory && (
+              <div className="mt-9 flex max-w-md flex-col gap-3 sm:flex-row">
+                <input
                 value={orderId}
                 onChange={(event) => setOrderId(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    void lookup();
-                  }
+                  if (event.key === "Enter") void lookup();
                 }}
                 placeholder="Order reference"
                 className="min-h-12 flex-1 border border-black/15 bg-white px-4 text-sm outline-none focus:border-black"
-              />
+                />
 
-              <button
+                <button
                 type="button"
                 onClick={() => void lookup()}
                 disabled={loading || !orderId.trim()}
                 className="min-h-12 bg-black px-7 text-xs font-bold uppercase tracking-[0.14em] text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {loading ? "Looking..." : "Track order"}
-              </button>
-            </div>
+                </button>
+              </div>
+            )}
+
+            {linkedFromHistory && order && (
+              <div className="mt-8 max-w-md border-t border-black/10 pt-6">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/40">
+                  Opened from your order history
+                </p>
+                <p className="mt-2 font-mono text-sm tracking-[0.06em]">
+                  {order.order_number ?? order.id}
+                </p>
+                <a
+                  href="/account#order-history"
+                  className="mt-4 inline-block text-[10px] font-bold uppercase tracking-[0.14em] underline underline-offset-4"
+                >
+                  Back to order history
+                </a>
+              </div>
+            )}
 
             {error && (
               <div className="mt-5 max-w-md border border-red-900/15 bg-red-50 p-4 text-sm leading-6 text-red-900">
@@ -171,7 +205,7 @@ export default function LiveOrderTracker() {
 
             {!order && !error && (
               <a
-                href="/auth"
+                href="/auth?next=/order"
                 className="mt-6 inline-block text-[10px] font-bold uppercase tracking-[0.14em] underline underline-offset-4"
               >
                 Sign in to access your orders
@@ -195,7 +229,7 @@ export default function LiveOrderTracker() {
                   </div>
 
                   <h3 className="mt-2 font-mono text-sm tracking-[0.08em]">
-                    {order.id.toUpperCase()}
+                    {order.order_number ?? order.id.toUpperCase()}
                   </h3>
                 </div>
 

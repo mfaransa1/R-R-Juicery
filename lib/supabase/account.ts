@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export type AccountOrder = {
   id: string;
+  order_number: string | null;
   status: string;
   fulfillment_type: string;
   payment_method: string;
@@ -13,7 +14,7 @@ export type AccountOrder = {
 };
 
 export type AccountFavourite = {
-  id: string;
+  profile_id: string;
   product_id: string;
   created_at: string;
   product: {
@@ -26,14 +27,21 @@ export type AccountFavourite = {
   } | null;
 };
 
-export async function getMyOrders() {
+export async function getMyOrders(): Promise<AccountOrder[]> {
   const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
 
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,status,fulfillment_type,payment_method,payment_status,subtotal,delivery_fee,total,created_at"
+      "id,order_number,status,fulfillment_type,payment_method,payment_status,subtotal,delivery_fee,total,created_at"
     )
+    .eq("customer_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -41,14 +49,23 @@ export async function getMyOrders() {
   return (data ?? []) as AccountOrder[];
 }
 
-export async function getMyFavourites() {
+export async function getMyFavourites(): Promise<AccountFavourite[]> {
   const supabase = createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  // favourites uses a composite primary key:
+  // profile_id + product_id. There is no "id" column.
   const { data, error } = await supabase
     .from("favourites")
     .select(
-      "id,product_id,created_at,product:products(id,slug,name,price,size,image_path)"
+      "profile_id,product_id,created_at,product:products(id,slug,name,price,size,image_path)"
     )
+    .eq("profile_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -66,15 +83,15 @@ export async function addFavourite(productId: string) {
   if (!user) throw new Error("Please sign in to save favourites.");
 
   const { error } = await supabase.from("favourites").upsert(
-  {
-    profile_id: user.id,
-    product_id: productId,
-  },
-  {
-    onConflict: "profile_id,product_id",
-    ignoreDuplicates: true,
-  }
-);
+    {
+      profile_id: user.id,
+      product_id: productId,
+    },
+    {
+      onConflict: "profile_id,product_id",
+      ignoreDuplicates: true,
+    }
+  );
 
   if (error) throw error;
 }
@@ -88,11 +105,11 @@ export async function removeFavourite(productId: string) {
 
   if (!user) throw new Error("Please sign in to manage favourites.");
 
-const { error } = await supabase
-  .from("favourites")
-  .delete()
-  .eq("profile_id", user.id)
-  .eq("product_id", productId);
+  const { error } = await supabase
+    .from("favourites")
+    .delete()
+    .eq("profile_id", user.id)
+    .eq("product_id", productId);
 
   if (error) throw error;
 }

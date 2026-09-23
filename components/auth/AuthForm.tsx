@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import Link from "next/link";
 
 type Mode = "signin" | "signup";
 
@@ -11,26 +11,30 @@ export default function AuthForm({ mode = "signin" }: { mode?: Mode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [modeState, setModeState] = useState<Mode>(mode);
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const isSignup = mode === "signup";
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    setMessage("");
     setError("");
+    setMessage("");
 
     try {
-      if (modeState === "signup") {
+      if (isSignup) {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
             data: {
               full_name: fullName.trim(),
+              phone: phone.trim(),
             },
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
           },
         });
 
@@ -42,131 +46,157 @@ export default function AuthForm({ mode = "signin" }: { mode?: Mode }) {
         }
 
         setMessage(
-          "Account created. Check your email to confirm your address, then sign in."
+          "Account created. Please check your email to confirm your account.",
         );
-      } else {
-        const { error: signInError } =
-          await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
-          });
-
-        if (signInError) throw signInError;
-
-        window.location.href = "/account";
+        setLoading(false);
         return;
       }
+
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+      if (signInError) throw signInError;
+      if (!data.user) throw new Error("Unable to complete sign in.");
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError) {
+        if (profileError.code === "PGRST116") {
+          window.location.href = "/account";
+          return;
+        }
+        throw profileError;
+      }
+
+      if (profile?.role === "staff" || profile?.role === "admin") {
+        window.location.href = "/admin";
+        return;
+      }
+
+      window.location.href = "/account";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
+      setError(
+        err instanceof Error ? err.message : "Something went wrong.",
+      );
       setLoading(false);
     }
   }
 
-  const isSignup = modeState === "signup";
-
   return (
-    <div className="w-full max-w-xl">
-      <div className="mb-8 flex border-b border-black/10">
-        <button
-          type="button"
-          onClick={() => {
-            setModeState("signin");
-            setError("");
-            setMessage("");
-          }}
-          className={`border-b-2 px-1 pb-4 text-xs font-bold uppercase tracking-[0.14em] ${
-            !isSignup ? "border-black" : "border-transparent text-black/45"
-          }`}
-        >
-          Sign in
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setModeState("signup");
-            setError("");
-            setMessage("");
-          }}
-          className={`ml-8 border-b-2 px-1 pb-4 text-xs font-bold uppercase tracking-[0.14em] ${
-            isSignup ? "border-black" : "border-transparent text-black/45"
-          }`}
-        >
-          Create account
-        </button>
+    <div className="w-full">
+      <div className="mb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/35">
+          {isSignup ? "JOIN R&R" : "WELCOME BACK"}
+        </p>
+        <h1 className="mt-4 font-serif text-4xl leading-none tracking-[-0.04em] text-[#111] sm:text-5xl">
+          {isSignup ? "Create your account." : "Sign in."}
+        </h1>
       </div>
+
+      {error && (
+        <div className="mb-6 border border-red-900/15 bg-red-900/[0.04] px-4 py-3 text-sm text-red-900">
+          {error}
+        </div>
+      )}
+
+      {message && (
+        <div className="mb-6 border border-black/10 bg-black/[0.03] px-4 py-3 text-sm text-black/70">
+          {message}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {isSignup && (
-          <label className="block">
-            <span className="rr-kicker">NAME</span>
-            <input
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="mt-2 w-full border-b border-black/20 bg-transparent px-0 py-3 text-base outline-none focus:border-black"
-              placeholder="Your name"
-            />
-          </label>
+          <>
+            <div>
+              <label htmlFor="fullName" className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-black/50">
+                Full name
+              </label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                autoComplete="name"
+                required
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
+                className="w-full border border-black/15 bg-[#f5f1e8] px-4 py-3.5 text-sm text-[#111] outline-none focus:border-black/50"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-black/50">
+                Phone
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                className="w-full border border-black/15 bg-[#f5f1e8] px-4 py-3.5 text-sm text-[#111] outline-none focus:border-black/50"
+              />
+            </div>
+          </>
         )}
 
-        <label className="block">
-          <span className="rr-kicker">EMAIL</span>
+        <div>
+          <label htmlFor="email" className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-black/50">
+            Email
+          </label>
           <input
-            required
+            id="email"
+            name="email"
             type="email"
+            autoComplete="email"
+            required
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-2 w-full border-b border-black/20 bg-transparent px-0 py-3 text-base outline-none focus:border-black"
-            placeholder="you@example.com"
+            onChange={(event) => setEmail(event.target.value)}
+            className="w-full border border-black/15 bg-[#f5f1e8] px-4 py-3.5 text-sm text-[#111] outline-none focus:border-black/50"
           />
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="rr-kicker">PASSWORD</span>
+        <div>
+          <label htmlFor="password" className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-black/50">
+            Password
+          </label>
           <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete={isSignup ? "new-password" : "current-password"}
             required
             minLength={6}
-            type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-2 w-full border-b border-black/20 bg-transparent px-0 py-3 text-base outline-none focus:border-black"
-            placeholder="••••••••"
+            onChange={(event) => setPassword(event.target.value)}
+            className="w-full border border-black/15 bg-[#f5f1e8] px-4 py-3.5 text-sm text-[#111] outline-none focus:border-black/50"
           />
-        </label>
+        </div>
 
-        {error && (
-          <div className="border border-red-900/20 bg-red-50 p-4 text-sm text-red-900">
-            {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="border border-black/10 bg-white p-4 text-sm">
-            {message}
+        {!isSignup && (
+          <div className="flex justify-end">
+            <Link href="/auth/forgot-password" className="text-xs text-black/50 underline underline-offset-4 hover:text-black">
+              Forgot password?
+            </Link>
           </div>
         )}
 
         <button
-          disabled={loading}
           type="submit"
-          className="inline-flex min-h-12 items-center justify-center bg-black px-7 text-xs font-bold uppercase tracking-[0.14em] text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={loading}
+          className="w-full bg-[#111111] px-5 py-4 text-sm font-medium text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading
-            ? "Please wait..."
-            : isSignup
-              ? "Create account"
-              : "Sign in"}
+          {loading ? "PLEASE WAIT..." : isSignup ? "CREATE ACCOUNT" : "SIGN IN"}
         </button>
       </form>
-
-      <p className="mt-8 text-sm leading-7 text-black/55">
-        Your R&R account will be used for orders, favourites and R&R MOVES.
-        <Link href="/faq" className="ml-1 underline underline-offset-4">
-          Read the FAQ.
-        </Link>
-      </p>
     </div>
   );
 }

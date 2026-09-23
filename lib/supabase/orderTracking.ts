@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export type CustomerOrder = {
   id: string;
+  order_number: string | null;
   status: string;
   fulfillment_type: string;
   payment_method: string;
@@ -44,14 +45,25 @@ export async function getMyOrder(orderId: string) {
     throw new Error("Please sign in to view your order.");
   }
 
-  const { data, error } = await supabase
+  const orderSelect =
+    "id,order_number,status,fulfillment_type,payment_method,payment_status,subtotal,delivery_fee,total,customer_name,customer_phone,customer_email,delivery_address,notes,created_at";
+
+  // UUIDs and customer-facing order references must be queried separately.
+  // Putting an R&R reference such as RR-20260923-7ED23BAO into an `id.eq`
+  // branch can make PostgreSQL attempt to cast it to UUID and fail before
+  // the order_number branch is evaluated.
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cleanId);
+
+  let query = supabase
     .from("orders")
-    .select(
-      "id,status,fulfillment_type,payment_method,payment_status,subtotal,delivery_fee,total,customer_name,customer_phone,customer_email,delivery_address,notes,created_at"
-    )
-    .eq("id", cleanId)
-    .eq("customer_id", user.id)
-    .maybeSingle();
+    .select(orderSelect)
+    .eq("customer_id", user.id);
+
+  query = isUuid
+    ? query.eq("id", cleanId)
+    : query.eq("order_number", cleanId);
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) throw error;
 
