@@ -1,6 +1,6 @@
 import CheckoutHero from "@/components/checkout/CheckoutHero";
-import CheckoutForm from "@/components/checkout/CheckoutForm";
-import CheckoutSummary from "@/components/checkout/CheckoutSummary";
+import LiveCheckoutForm from "@/components/checkout/LiveCheckoutForm";
+import LiveCheckoutSummary from "@/components/checkout/LiveCheckoutSummary";
 import CheckoutTrust from "@/components/checkout/CheckoutTrust";
 import CheckoutClosing from "@/components/checkout/CheckoutClosing";
 
@@ -17,8 +17,8 @@ export default function CheckoutPage() {
 
       <section className="bg-[#f5f1e8] py-20 text-[#111] lg:py-28">
         <div className="mx-auto grid max-w-[1200px] gap-12 px-5 sm:px-8 lg:grid-cols-[1.2fr_0.8fr] lg:px-14">
-          <CheckoutForm />
-          <CheckoutSummary />
+          <LiveCheckoutForm />
+          <LiveCheckoutSummary />
         </div>
       </section>
 

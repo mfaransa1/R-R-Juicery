@@ -1,10 +1,7 @@
-import AdminOverview from "@/components/admin/AdminOverview";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 
-export const metadata = {
-  title: "R&R Operations",
-  description: "The Rook & Reed Juicery operations dashboard.",
-};
+export const metadata = { title: "Admin Dashboard | The Rook & Reed Juicery" };
 
 export default function AdminPage() {
-  return <AdminOverview />;
+  return <AdminDashboard />;
 }

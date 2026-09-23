@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import MobileMenu from "./MobileMenu";
 import SiteNav from "./SiteNav";
+import CartButton from "@/components/cart/CartButton";
 
 export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -69,19 +70,8 @@ export default function SiteHeader() {
                 R&R Passport
               </Link>
 
-              <Link
-                href="/checkout"
-                aria-label="Shopping bag"
-                className={[
-                  "flex h-10 min-w-10 items-center justify-center border px-3 text-[10px] font-bold uppercase tracking-[0.1em] transition-colors duration-300",
-                  scrolled
-                    ? "border-black/15"
-                    : "border-white/40",
-                ].join(" ")}
-              >
-                <span className="hidden sm:inline">Bag</span>
-                <span className="sm:ml-1">(0)</span>
-              </Link>
+              {/* Live cart */}
+              <CartButton />
 
               <button
                 type="button"
@@ -90,9 +80,7 @@ export default function SiteHeader() {
                 aria-expanded={mobileOpen}
                 className={[
                   "flex h-10 w-10 items-center justify-center border lg:hidden",
-                  scrolled
-                    ? "border-black/15"
-                    : "border-white/40",
+                  scrolled ? "border-black/15" : "border-white/40",
                 ].join(" ")}
               >
                 <span className="flex w-4 flex-col gap-[5px]">

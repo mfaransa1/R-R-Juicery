@@ -32,14 +32,34 @@ export type PlacedOrder = {
   subtotal: number;
   delivery_fee: number;
   total: number;
-  status: "pending" | "confirmed" | "preparing" | "pressing" | "ready" | "out_for_delivery" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "confirmed"
+    | "preparing"
+    | "pressing"
+    | "ready"
+    | "out_for_delivery"
+    | "completed"
+    | "cancelled";
   created_at: string;
 };
 
 const supabase = createClient();
 
-export async function placeOrder(input: PlaceOrderInput): Promise<PlacedOrder> {
-  if (!input.items.length) throw new Error("Your basket is empty.");
+export async function placeOrder(
+  input: PlaceOrderInput,
+): Promise<PlacedOrder> {
+  if (!input.items.length) {
+    throw new Error("Your basket is empty.");
+  }
+
+  // The cart uses camelCase (`productId`) while the Supabase RPC expects
+  // snake_case JSON (`product_id`). Do the translation here at the boundary.
+  const rpcItems = input.items.map((item) => ({
+    product_id: item.productId,
+    quantity: item.quantity,
+    size: item.size ?? null,
+  }));
 
   const { data, error } = await supabase.rpc("place_order", {
     p_customer_name: input.customerName,
@@ -50,7 +70,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlacedOrder> {
     p_delivery_notes: input.deliveryNotes ?? null,
     p_payment_method: input.paymentMethod,
     p_notes: input.notes ?? null,
-    p_items: input.items,
+    p_items: rpcItems,
   });
 
   if (error) {
