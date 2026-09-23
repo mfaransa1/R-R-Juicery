@@ -1,9 +1,7 @@
-import AdminEvents from "@/components/admin/AdminEvents";
+import AdminEventsCMS from "@/components/admin/AdminEventsCMS";
 
-export const metadata = {
-  title: "Events | R&R Operations",
-};
+export const metadata = { title: "Events | R&R Control Room" };
 
-export default function AdminEventsPage() {
-  return <AdminEvents />;
+export default function EventsAdminPage() {
+  return <AdminEventsCMS />;
 }

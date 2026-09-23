@@ -4,13 +4,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Bell,
+  Boxes,
+  BookOpenText,
+  CalendarDays,
+  ChartNoAxesCombined,
   ClipboardList,
+  CreditCard,
   Droplets,
+  Factory,
+  History,
   Home,
   Leaf,
   LogOut,
   Menu,
   PackageCheck,
+  QrCode,
+  Route,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Truck,
   UserRound,
   UsersRound,
   Wheat,
@@ -20,13 +34,121 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const baseItems = [
-  { label: "Dashboard", href: "/admin", icon: BarChart3 },
-  { label: "Orders", href: "/admin/orders", icon: ClipboardList },
-  { label: "Products", href: "/admin/products", icon: Droplets },
-  { label: "Ingredients", href: "/admin/ingredients", icon: Leaf },
-  { label: "Sourcing", href: "/admin/sourcing", icon: Wheat },
-  { label: "Batches", href: "/admin/batches", icon: PackageCheck },
-  { label: "Customers", href: "/admin/customers", icon: UserRound },
+  {
+    label: "Dashboard",
+    href: "/admin",
+    icon: BarChart3,
+  },
+  {
+    label: "Orders",
+    href: "/admin/orders",
+    icon: ClipboardList,
+  },
+  {
+    label: "Payments",
+    href: "/admin/payments",
+    icon: CreditCard,
+  },
+  {
+    label: "Analytics",
+    href: "/admin/analytics",
+    icon: ChartNoAxesCombined,
+  },
+
+  // Products & ingredients
+  {
+    label: "Products",
+    href: "/admin/products",
+    icon: Droplets,
+  },
+  {
+    label: "Ingredients",
+    href: "/admin/ingredients",
+    icon: Leaf,
+  },
+
+  // Operations
+  {
+    label: "Inventory",
+    href: "/admin/inventory",
+    icon: Boxes,
+  },
+  {
+    label: "Suppliers",
+    href: "/admin/suppliers",
+    icon: Factory,
+  },
+  {
+    label: "Sourcing",
+    href: "/admin/sourcing",
+    icon: Wheat,
+  },
+  {
+    label: "Batches",
+    href: "/admin/batches",
+    icon: PackageCheck,
+  },
+  {
+    label: "Production",
+    href: "/admin/production",
+    icon: Factory,
+  },
+  {
+    label: "Traceability",
+    href: "/admin/batches/traceability",
+    icon: QrCode,
+  },
+  {
+    label: "Delivery",
+    href: "/admin/delivery-zones",
+    icon: Truck,
+  },
+
+  // Customers
+  {
+    label: "Customers",
+    href: "/admin/customers",
+    icon: UserRound,
+  },
+  {
+    label: "Loyalty",
+    href: "/admin/loyalty",
+    icon: Sparkles,
+  },
+
+  // Content
+  {
+    label: "Events",
+    href: "/admin/events",
+    icon: CalendarDays,
+  },
+  {
+    label: "Journal",
+    href: "/admin/journal",
+    icon: BookOpenText,
+  },
+
+  // Infrastructure
+  {
+    label: "Notifications",
+    href: "/admin/notifications",
+    icon: Bell,
+  },
+  {
+    label: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
+  },
+  {
+    label: "Audit Log",
+    href: "/admin/audit",
+    icon: History,
+  },
+  {
+    label: "Security",
+    href: "/admin/security",
+    icon: ShieldCheck,
+  },
 ];
 
 export default function AdminNav({
@@ -75,7 +197,7 @@ export default function AdminNav({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5">
+      <nav className="flex-1 overflow-y-auto px-3 py-5">
         <p className="px-3 pb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-black/35">
           Manage
         </p>

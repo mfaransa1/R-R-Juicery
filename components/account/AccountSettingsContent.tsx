@@ -2,246 +2,28 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, LockKeyhole, LogOut, Save, UserRound } from "lucide-react";
+import { ArrowLeft, CheckCircle2, KeyRound, LogOut, Mail, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getMyProfile, updateMyProfile } from "@/lib/supabase/profile";
 
-export default function AccountSettingsContent() {
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-
-    async function load() {
-      try {
-        const result = await getMyProfile();
-        if (!active) return;
-
-        if (!result) {
-          setError("Please sign in to manage your account.");
-          return;
-        }
-
-        setEmail(result.email);
-        setFullName(result.profile.full_name ?? "");
-        setPhone(result.profile.phone ?? "");
-      } catch (err) {
-        if (!active) return;
-        setError(err instanceof Error ? err.message : "Unable to load your profile.");
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    void load();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  async function handleSave(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage("");
-    setError("");
-
-    try {
-      await updateMyProfile({ full_name: fullName, phone });
-      setMessage("Your details have been saved.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save your details.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleResetPassword() {
-    setMessage("");
-    setError("");
-
-    if (!email) {
-      setError("Your account email could not be loaded.");
-      return;
-    }
-
-    const supabase = createClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-
-    if (resetError) {
-      setError(resetError.message);
-      return;
-    }
-
-    setMessage("Password reset instructions have been sent to your email.");
-  }
-
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/account";
-  }
-
-  if (loading) {
-    return (
-      <section className="bg-[#f5f1e8] py-24 text-[#111] lg:py-32">
-        <div className="mx-auto max-w-[1100px] px-5 sm:px-8 lg:px-14">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/40">
-            ACCOUNT SETTINGS
-          </p>
-          <div className="mt-10 h-48 animate-pulse bg-black/[0.04]" />
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="bg-[#f5f1e8] py-20 text-[#111] lg:py-28">
-      <div className="mx-auto max-w-[1100px] px-5 sm:px-8 lg:px-14">
-        <Link
-          href="/account"
-          className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-black/55 transition hover:text-black"
-        >
-          <ArrowLeft size={14} strokeWidth={1.5} />
-          Back to Passport
-        </Link>
-
-        <div className="mt-12 grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-black/40">
-              YOUR DETAILS
-            </p>
-            <h1 className="mt-5 font-serif text-6xl leading-[0.86] tracking-[-0.055em] sm:text-7xl">
-              Keep your<br />
-              details<br />
-              current.
-            </h1>
-            <p className="mt-7 max-w-sm text-base leading-relaxed text-black/55">
-              These details are used for your R&R account and future order communication.
-            </p>
-
-            <div className="mt-10 border-t border-black/15 pt-6">
-              <div className="flex gap-4">
-                <UserRound size={18} strokeWidth={1.4} className="mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Profile details</p>
-                  <p className="mt-1 text-sm leading-relaxed text-black/45">
-                    Update your name and phone number without changing your sign-in email.
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 flex gap-4">
-                <LockKeyhole size={18} strokeWidth={1.4} className="mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">Account security</p>
-                  <p className="mt-1 text-sm leading-relaxed text-black/45">
-                    Password changes are handled securely through Supabase Auth.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 sm:p-10">
-            {error ? (
-              <div className="mb-7 border border-black/10 bg-[#f5f1e8] px-4 py-3 text-sm text-black/70">
-                {error}
-              </div>
-            ) : null}
-
-            {message ? (
-              <div className="mb-7 flex items-center gap-2 border border-black/10 bg-[#f5f1e8] px-4 py-3 text-sm text-black/70">
-                <Check size={15} strokeWidth={1.7} />
-                {message}
-              </div>
-            ) : null}
-
-            <form onSubmit={handleSave}>
-              <div>
-                <label htmlFor="settings-email" className="text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-                  Email
-                </label>
-                <input
-                  id="settings-email"
-                  value={email}
-                  readOnly
-                  className="mt-3 w-full border border-black/15 bg-black/[0.025] px-4 py-3 text-sm text-black/55 outline-none"
-                />
-                <p className="mt-2 text-xs text-black/40">Your sign-in email is managed by authentication.</p>
-              </div>
-
-              <div className="mt-7">
-                <label htmlFor="settings-name" className="text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-                  Full name
-                </label>
-                <input
-                  id="settings-name"
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                  autoComplete="name"
-                  className="mt-3 w-full border border-black/15 bg-white px-4 py-3 text-sm outline-none transition focus:border-black/45"
-                  placeholder="Your full name"
-                />
-              </div>
-
-              <div className="mt-7">
-                <label htmlFor="settings-phone" className="text-xs font-semibold uppercase tracking-[0.2em] text-black/45">
-                  Phone number
-                </label>
-                <input
-                  id="settings-phone"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  autoComplete="tel"
-                  inputMode="tel"
-                  className="mt-3 w-full border border-black/15 bg-white px-4 py-3 text-sm outline-none transition focus:border-black/45"
-                  placeholder="07..."
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={saving}
-                className="mt-8 inline-flex w-full items-center justify-center gap-2 bg-[#111] px-6 py-4 text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Save size={15} strokeWidth={1.5} />
-                {saving ? "Saving..." : "Save details"}
-              </button>
-            </form>
-
-            <div className="mt-12 border-t border-black/10 pt-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-black/40">
-                SECURITY
-              </p>
-              <button
-                type="button"
-                onClick={handleResetPassword}
-                className="mt-4 text-sm underline underline-offset-4 decoration-black/25 transition hover:decoration-black"
-              >
-                Send me a password reset email
-              </button>
-            </div>
-
-            <div className="mt-10 border-t border-black/10 pt-8">
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-black/55 transition hover:text-black"
-              >
-                <LogOut size={15} strokeWidth={1.5} />
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+export default function AccountSettingsPolished(){
+  const [email,setEmail]=useState("");
+  const [loading,setLoading]=useState(true);
+  const [sending,setSending]=useState(false);
+  const [message,setMessage]=useState("");
+  const [error,setError]=useState("");
+  useEffect(()=>{(async()=>{const supabase=createClient();const {data:{user}}=await supabase.auth.getUser();if(!user){window.location.href="/auth";return;}setEmail(user.email??"");setLoading(false);})();},[]);
+  async function resetPassword(){try{setSending(true);setError("");setMessage("");const supabase=createClient();const {error:e}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:`${window.location.origin}/auth/reset-password`});if(e)throw e;setMessage("Password reset instructions have been sent to your email.");}catch(e){setError(e instanceof Error?e.message:"Unable to send password reset instructions.");}finally{setSending(false);}}
+  async function signOut(){const supabase=createClient();await supabase.auth.signOut();window.location.href="/auth";}
+  if(loading)return <main className="min-h-screen bg-[#f5f1e8] px-5 pt-28 lg:px-10 lg:pt-36"><div className="mx-auto max-w-[900px]"><div className="h-10 w-48 animate-pulse bg-black/10"/></div></main>;
+  return <main className="min-h-screen bg-[#f5f1e8] px-5 pb-20 pt-28 lg:px-10 lg:pt-36"><div className="mx-auto max-w-[900px]">
+    <Link href="/account" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/40 hover:text-black"><ArrowLeft size={14}/>Passport</Link>
+    <header className="mt-10 border-b border-black/10 pb-8"><p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/35">R&R PASSPORT / ACCOUNT</p><h1 className="mt-3 font-serif text-5xl tracking-[-0.045em]">Account</h1><p className="mt-4 max-w-xl text-sm leading-7 text-black/50">Manage your sign-in details and account access.</p></header>
+    {message&&<div className="mt-8 flex gap-3 border border-green-200 bg-green-50 p-4 text-sm text-green-800"><CheckCircle2 size={18}/>{message}</div>}
+    {error&&<div className="mt-8 border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+    <section className="mt-8 border border-black/10 bg-white">
+      <div className="border-b border-black/10 p-7 md:p-9"><p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-black/35">SIGN-IN EMAIL</p><div className="mt-5 flex items-center gap-4"><Mail size={19} className="text-black/30"/><p className="text-base">{email}</p></div><p className="mt-4 text-xs leading-5 text-black/40">Your authentication email is managed by Supabase Auth.</p></div>
+      <div className="border-b border-black/10 p-7 md:p-9"><div className="flex gap-4"><KeyRound size={20} className="mt-1 text-black/30"/><div><p className="font-serif text-2xl">Password</p><p className="mt-2 max-w-xl text-sm leading-6 text-black/45">Send yourself a secure password reset link whenever you need to change your password.</p><button onClick={resetPassword} disabled={sending} className="mt-6 inline-flex items-center gap-2 bg-[#111111] px-5 py-3 text-sm font-medium text-white disabled:opacity-50">{sending?<RefreshCw size={15} className="animate-spin"/>:<KeyRound size={15}/>}Send reset link</button></div></div></div>
+      <div className="p-7 md:p-9"><div className="flex gap-4"><LogOut size={20} className="mt-1 text-black/30"/><div><p className="font-serif text-2xl">Sign out</p><p className="mt-2 max-w-xl text-sm leading-6 text-black/45">Sign out of this R&R account on this device.</p><button onClick={signOut} className="mt-6 inline-flex items-center gap-2 border border-black/15 px-5 py-3 text-sm font-medium hover:bg-black hover:text-white"><LogOut size={15}/>Sign out</button></div></div></div>
     </section>
-  );
+  </div></main>;
 }

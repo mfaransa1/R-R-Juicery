@@ -1,9 +1,7 @@
-import AdminJournal from "@/components/admin/AdminJournal";
+import AdminJournalCMS from "@/components/admin/AdminJournalCMS";
 
-export const metadata = {
-  title: "Journal | R&R Operations",
-};
+export const metadata = { title: "Journal | R&R Control Room" };
 
-export default function AdminJournalPage() {
-  return <AdminJournal />;
+export default function JournalAdminPage() {
+  return <AdminJournalCMS />;
 }

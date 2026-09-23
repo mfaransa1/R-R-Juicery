@@ -1,176 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, ArrowRight, Trash2, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import {
-  getMyFavourites,
-  removeFavourite,
-  type AccountFavourite,
-} from "@/lib/supabase/account";
+import { ArrowLeft, ArrowUpRight, Bookmark, ChevronRight, RefreshCw, X } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { getMyFavourites, type AccountFavourite } from "@/lib/supabase/account";
 
-export default function AccountFavouritesPageContent() {
-  const [favourites, setFavourites] = useState<AccountFavourite[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [removing, setRemoving] = useState<string | null>(null);
+const money=(v:number)=>new Intl.NumberFormat("en-KE",{style:"currency",currency:"KES",maximumFractionDigits:0}).format(v);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      setFavourites(await getMyFavourites());
-    } catch {
-      setError("Unable to load your saved moves.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function handleRemove(productId: string) {
-    setRemoving(productId);
-    setError("");
-
-    try {
-      await removeFavourite(productId);
-      setFavourites((current) =>
-        current.filter((item) => item.product_id !== productId)
-      );
-    } catch {
-      setError("Unable to remove that saved juice. Please try again.");
-    } finally {
-      setRemoving(null);
-    }
-  }
-
-  return (
-    <section className="mx-auto max-w-[1280px] px-5 pb-24 sm:px-8 lg:px-14">
-      <div className="flex items-end justify-between gap-8 border-b border-white/15 pb-7">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/35">
-            YOUR FAVOURITES
-          </p>
-          <h2 className="mt-4 font-serif text-5xl leading-[0.9] tracking-[-0.045em] sm:text-7xl">
-            Saved moves.
-          </h2>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => void load()}
-          disabled={loading}
-          className="hidden items-center gap-2 border border-white/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition hover:border-white/40 disabled:opacity-50 sm:inline-flex"
-        >
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          Refresh
-        </button>
-      </div>
-
-      {error ? (
-        <div className="mt-8 border border-red-900/50 bg-red-950/30 px-6 py-5 text-sm text-red-200">
-          {error}
-        </div>
-      ) : null}
-
-      {loading ? (
-        <div className="py-16 text-sm uppercase tracking-[0.2em] text-white/40">
-          Loading saved moves...
-        </div>
-      ) : favourites.length === 0 ? (
-        <div className="py-16">
-          <Heart size={30} strokeWidth={1.2} className="text-white/45" />
-          <h3 className="mt-6 font-serif text-4xl tracking-[-0.03em]">
-            Nothing saved yet.
-          </h3>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/50">
-            Save the juices you want to return to. Your favourites will stay
-            with your R&R Passport.
-          </p>
-          <Link
-            href="/menu"
-            className="mt-8 inline-flex items-center gap-3 border border-white/20 px-6 py-4 text-xs font-semibold uppercase tracking-[0.2em] transition hover:border-white/50"
-          >
-            Explore the menu
-            <ArrowRight size={15} />
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-x-8 gap-y-10 pt-10 sm:grid-cols-2 lg:grid-cols-3">
-          {favourites.map((item) => {
-            const product = item.product;
-
-            if (!product) return null;
-
-            return (
-              <article
-                key={`${item.profile_id}-${item.product_id}`}
-                className="group border-b border-white/15 pb-8"
-              >
-                <div className="aspect-[4/3] overflow-hidden bg-white/10">
-                  {product.image_path ? (
-                    <img
-                      src={product.image_path}
-                      alt={product.name}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-white text-black/30">
-                      <span className="font-serif text-5xl">
-                        {product.name.slice(0, 1)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-start justify-between gap-5 pt-6">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/35">
-                      {product.size}
-                    </p>
-                    <h3 className="mt-2 font-serif text-3xl tracking-[-0.03em]">
-                      {product.name}
-                    </h3>
-                    <p className="mt-3 text-sm text-white/55">
-                      KSh {Number(product.price).toLocaleString()}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    aria-label={`Remove ${product.name} from favourites`}
-                    onClick={() => void handleRemove(product.id)}
-                    disabled={removing === product.id}
-                    className="mt-1 border border-white/15 p-3 text-white/65 transition hover:border-white/40 hover:text-white disabled:opacity-50"
-                  >
-                    <Trash2 size={16} strokeWidth={1.4} />
-                  </button>
-                </div>
-
-                <div className="mt-6 flex gap-5">
-                  <Link
-                    href={`/menu/${product.slug}`}
-                    className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] transition hover:text-white/65"
-                  >
-                    View juice
-                    <ArrowRight size={14} />
-                  </Link>
-                  <Link
-                    href="/menu"
-                    className="text-xs font-semibold uppercase tracking-[0.18em] text-white/45 transition hover:text-white"
-                  >
-                    Order
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
+export default function AccountFavouritesPolished(){
+  const [items,setItems]=useState<AccountFavourite[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [refreshing,setRefreshing]=useState(false);
+  const [removing,setRemoving]=useState<string|null>(null);
+  const [error,setError]=useState("");
+  const load=useCallback(async()=>{try{setError("");setItems(await getMyFavourites());}catch(e){setError(e instanceof Error?e.message:"Unable to load your saved moves.");}finally{setLoading(false);setRefreshing(false);}},[]);
+  useEffect(()=>{load();},[load]);
+  async function remove(item:AccountFavourite){try{setRemoving(item.product_id);const supabase=createClient();const {data:{user}}=await supabase.auth.getUser();if(!user){window.location.href="/auth";return;}const {error:e}=await supabase.from("favourites").delete().eq("profile_id",user.id).eq("product_id",item.product_id);if(e)throw e;setItems(c=>c.filter(x=>x.product_id!==item.product_id));}catch(e){setError(e instanceof Error?e.message:"Unable to remove this saved move.");}finally{setRemoving(null);}}
+  return <main className="min-h-screen bg-[#f5f1e8] px-5 pb-20 pt-28 lg:px-10 lg:pt-36"><div className="mx-auto max-w-[1200px]">
+    <Link href="/account" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/40 hover:text-black"><ArrowLeft size={14}/>Passport</Link>
+    <header className="mt-10 flex flex-col gap-5 border-b border-black/10 pb-8 md:flex-row md:items-end md:justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/35">R&R PASSPORT / SAVED MOVES</p><h1 className="mt-3 font-serif text-5xl tracking-[-0.045em]">Saved Moves</h1><p className="mt-4 max-w-2xl text-sm leading-7 text-black/50">The juices you've kept close.</p></div><button onClick={async()=>{setRefreshing(true);await load();}} disabled={refreshing} className="inline-flex items-center gap-2 border border-black/10 bg-white px-4 py-2.5 text-xs font-medium hover:bg-black hover:text-white disabled:opacity-50"><RefreshCw size={14} className={refreshing?"animate-spin":""}/>Refresh</button></header>
+    {error&&<div className="mt-8 border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+    {loading?<div className="mt-8 grid gap-px bg-black/10 md:grid-cols-2"><div className="h-64 bg-white"/><div className="h-64 bg-white"/></div>:items.length===0?<div className="mt-8 border border-black/10 bg-white p-10 text-center md:p-16"><Bookmark size={30} className="mx-auto text-black/20"/><h2 className="mt-5 font-serif text-3xl">Nothing saved yet.</h2><p className="mx-auto mt-3 max-w-md text-sm leading-7 text-black/45">When a juice catches your attention, save it here for your next move.</p><Link href="/menu" className="mt-7 inline-flex items-center gap-2 bg-[#111111] px-5 py-3 text-sm font-medium text-white">Explore the menu<ArrowUpRight size={15}/></Link></div>:<div className="mt-8 grid gap-px border border-black/10 bg-black/10 md:grid-cols-2">{items.map(item=><article key={`${item.profile_id}-${item.product_id}`} className="group relative bg-white p-6 md:p-8"><div className="flex min-h-[230px] flex-col justify-between"><div><div className="flex items-start justify-between gap-4"><span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/35">SAVED MOVE</span><button type="button" onClick={()=>remove(item)} disabled={removing===item.product_id} className="rounded-sm p-1.5 text-black/30 hover:bg-black/[0.04] hover:text-black disabled:opacity-50" aria-label={`Remove ${item.product?.name??"saved move"}`}>{removing===item.product_id?<RefreshCw size={16} className="animate-spin"/>:<X size={16}/>}</button></div><h2 className="mt-10 font-serif text-4xl tracking-[-0.04em]">{item.product?.name??"Saved juice"}</h2>{item.product&&<p className="mt-3 text-sm text-black/45">{item.product.size} · {money(Number(item.product.price))}</p>}</div><Link href={item.product?`/menu/${item.product.slug}`:"/menu"} className="mt-8 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-black/45 hover:text-black">View juice<ChevronRight size={14}/></Link></div></article>)}</div>}
+  </div></main>;
 }

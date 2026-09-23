@@ -1,9 +1,9 @@
-import AdminSettings from "@/components/admin/AdminSettings";
+import AdminBusinessSettings from "@/components/admin/AdminBusinessSettings";
 
 export const metadata = {
-  title: "Settings | R&R Operations",
+  title: "Business Settings | R&R Control Room",
 };
 
 export default function AdminSettingsPage() {
-  return <AdminSettings />;
+  return <AdminBusinessSettings />;
 }
