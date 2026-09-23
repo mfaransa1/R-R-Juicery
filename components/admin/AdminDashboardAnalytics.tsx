@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -46,7 +46,7 @@ function Metric({
 }: {
   label: string;
   value: string;
-  note?: string;
+  note?: ReactNode;
 }) {
   return (
     <div className="border border-black/10 bg-white p-5">

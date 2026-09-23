@@ -87,7 +87,7 @@ export default function AccountFavourites() {
             if (!product) return null;
 
             return (
-              <article key={item.id} className="bg-[var(--rr-paper)]">
+              <article key={`${item.profile_id}-${item.product_id}`} className="bg-[var(--rr-paper)]">
                 <a href={`/menu/${product.slug}`} className="block">
                   <div className="relative aspect-[4/3] overflow-hidden bg-white">
                     <Image

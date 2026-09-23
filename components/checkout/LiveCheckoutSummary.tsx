@@ -61,7 +61,7 @@ export default function LiveCheckoutSummary() {
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden bg-[var(--rr-paper)] sm:h-24 sm:w-24">
                       <img
                         src={
-                          item.image ||
+                          item.imagePath ||
                           `/images/products/${item.slug ?? item.productId}.jpg`
                         }
                         alt={item.name}
@@ -83,7 +83,7 @@ export default function LiveCheckoutSummary() {
 
                         <button
                           type="button"
-                          onClick={() => removeItem(item.productId, item.size)}
+                          onClick={() => removeItem(item.productId)}
                           aria-label={`Remove ${item.name}`}
                           className="shrink-0 text-black/35 transition hover:text-black"
                         >
@@ -98,7 +98,6 @@ export default function LiveCheckoutSummary() {
                             onClick={() =>
                               updateQuantity(
                                 item.productId,
-                                item.size,
                                 Math.max(1, item.quantity - 1),
                               )
                             }
@@ -117,7 +116,6 @@ export default function LiveCheckoutSummary() {
                             onClick={() =>
                               updateQuantity(
                                 item.productId,
-                                item.size,
                                 item.quantity + 1,
                               )
                             }

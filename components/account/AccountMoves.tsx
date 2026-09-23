@@ -348,7 +348,7 @@ export default function AccountMoves() {
 
                   return (
                     <Link
-                      key={favourite.id}
+                      key={`${favourite.profile_id}-${favourite.product_id}`}
                       href={`/menu/${product.slug}`}
                       className="group flex gap-4 border-b border-white/10 py-4"
                     >
