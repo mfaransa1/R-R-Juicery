@@ -663,3 +663,41 @@ video {
     transition-duration: 0.01ms !important;
   }
 }
+/* R&R Jazz audio controls
+   Add this block to app/globals.css.
+*/
+.rr-audio-range {
+  height: 3px;
+  appearance: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.rr-audio-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: currentColor;
+  border: 0;
+}
+
+.rr-audio-range::-moz-range-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: currentColor;
+  border: 0;
+}
+
+.rr-audio-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rr-audio-range,
+  .rr-audio-range::-webkit-slider-thumb {
+    scroll-behavior: auto;
+  }
+}

@@ -1,6 +1,3 @@
-"use client";
-
-import Link from "next/link";
 import { Clock3, Mail, MapPin, Phone } from "lucide-react";
 
 export default function ContactDetails() {
@@ -14,18 +11,14 @@ export default function ContactDetails() {
             rel="noreferrer"
             className="group bg-[#f5f1e8] p-8 transition hover:bg-white sm:p-10"
           >
-            <Phone
-              size={21}
-              strokeWidth={1.3}
-              className="text-black/40"
-            />
+            <Phone size={21} strokeWidth={1.3} className="text-black/40" />
 
             <p className="mt-9 text-[9px] font-semibold uppercase tracking-[0.25em] text-black/35">
               PHONE / WHATSAPP
             </p>
 
             <p className="mt-3 font-serif text-2xl tracking-[-0.03em]">
-              0758 038 852
+              +254 758 038 852
             </p>
           </a>
 
@@ -33,11 +26,7 @@ export default function ContactDetails() {
             href="mailto:rookreedjuicery@gmail.com"
             className="group bg-[#f5f1e8] p-8 transition hover:bg-white sm:p-10"
           >
-            <Mail
-              size={21}
-              strokeWidth={1.3}
-              className="text-black/40"
-            />
+            <Mail size={21} strokeWidth={1.3} className="text-black/40" />
 
             <p className="mt-9 text-[9px] font-semibold uppercase tracking-[0.25em] text-black/35">
               EMAIL
@@ -49,11 +38,7 @@ export default function ContactDetails() {
           </a>
 
           <div className="bg-[#f5f1e8] p-8 sm:p-10">
-            <MapPin
-              size={21}
-              strokeWidth={1.3}
-              className="text-black/40"
-            />
+            <MapPin size={21} strokeWidth={1.3} className="text-black/40" />
 
             <p className="mt-9 text-[9px] font-semibold uppercase tracking-[0.25em] text-black/35">
               FIND US
@@ -63,17 +48,11 @@ export default function ContactDetails() {
               Rook & Reed Plaza
             </p>
 
-            <p className="mt-1 text-sm text-black/45">
-              Kilimani, Nairobi
-            </p>
+            <p className="mt-1 text-sm text-black/45">Kilimani, Nairobi</p>
           </div>
 
           <div className="bg-[#f5f1e8] p-8 sm:p-10">
-            <Clock3
-              size={21}
-              strokeWidth={1.3}
-              className="text-black/40"
-            />
+            <Clock3 size={21} strokeWidth={1.3} className="text-black/40" />
 
             <p className="mt-9 text-[9px] font-semibold uppercase tracking-[0.25em] text-black/35">
               OPEN DAILY
@@ -83,9 +62,7 @@ export default function ContactDetails() {
               8 AM — 8 PM
             </p>
 
-            <p className="mt-1 text-sm text-black/45">
-              Every day
-            </p>
+            <p className="mt-1 text-sm text-black/45">Every day</p>
           </div>
         </div>
       </div>

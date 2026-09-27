@@ -1,0 +1,5 @@
+import { createClient } from "@/lib/supabase/client";
+export type Batch={id:string;batch_code:string;product_id:string|null;production_date:string;preparation_method:string|null;storage:string|null;freshness:string|null;quantity:number|null;unit:string|null;use_by_date:string|null;status:string|null;notes:string|null;released_at:string|null;product?:{name:string;slug:string}|null};
+const db=()=>createClient();
+export async function getBatches(){const {data,error}=await db().from("batches").select("id,batch_code,product_id,production_date,preparation_method,storage,freshness,quantity,unit,use_by_date,status,notes,released_at,product:products(name,slug)").order("production_date",{ascending:false}).order("created_at",{ascending:false});if(error)throw error;return(data??[]) as unknown as Batch[];}
+export async function updateBatchStatus(id:string,status:string){const {data,error}=await db().from("batches").update({status,released_at:status==="released"?new Date().toISOString():null,released_by:status==="released"?(await db().auth.getUser()).data.user?.id:null}).eq("id",id).select("*").single();if(error)throw error;return data;}

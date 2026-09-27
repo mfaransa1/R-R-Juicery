@@ -1,40 +1,51 @@
 import { createClient } from "@/lib/supabase/client";
 
-export type ProductIngredientStatus =
-  | "verified_organic"
-  | "supplier_claimed"
-  | "conventional"
-  | "unknown";
-
 export type IngredientOption = {
   id: string;
   name: string;
-  slug: string;
 };
 
-export type ProductIngredientRow = {
-  id: string;
+export type ProductIngredient = {
   product_id: string;
   ingredient_id: string;
-  amount: string | null;
-  organic_status: ProductIngredientStatus;
-  source: string | null;
-  ingredient: IngredientOption | null;
+  quantity: number | null;
+  unit: string | null;
+  ingredient: {
+    id: string;
+    slug: string;
+    name: string;
+    description: string | null;
+    short_description: string | null;
+    organic_status:
+      | "verified_organic"
+      | "supplier_claimed"
+      | "conventional"
+      | "unknown";
+    source: string | null;
+    origin: string | null;
+    preparation: string | null;
+    storage: string | null;
+    seasonality: string | null;
+    image_path: string | null;
+    color: string | null;
+  } | null;
 };
 
 export type ProductIngredientInput = {
+  product_id: string;
   ingredient_id: string;
-  amount?: string | null;
-  organic_status: ProductIngredientStatus;
-  source?: string | null;
+  quantity: number | null;
+  unit: string | null;
+};
+
+type ProductIngredientRow = {
+  product_id: string;
+  ingredient_id: string;
+  quantity: number | null;
+  unit: string | null;
 };
 
 const supabase = createClient();
-
-function clean(value: string | null | undefined) {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : null;
-}
 
 function getErrorMessage(error: {
   message?: string;
@@ -52,151 +63,192 @@ function getErrorMessage(error: {
     .join(" ");
 }
 
-function normalizeIngredientRelation(
-  ingredient:
-    | IngredientOption
-    | IngredientOption[]
-    | null
-    | undefined,
-): IngredientOption | null {
-  if (!ingredient) {
-    return null;
-  }
-
-  if (Array.isArray(ingredient)) {
-    return ingredient[0] ?? null;
-  }
-
-  return ingredient;
-}
-
+/**
+ * Get the ingredient options used by the admin recipe editor.
+ */
 export async function getIngredientOptions(): Promise<IngredientOption[]> {
   const { data, error } = await supabase
     .from("ingredients")
-    .select("id, name, slug")
-    .order("name", { ascending: true });
+    .select("id, name")
+    .order("name");
 
   if (error) {
-    throw new Error(getErrorMessage(error));
+    throw new Error(
+      `Unable to load ingredient options: ${getErrorMessage(error)}`,
+    );
   }
 
   return (data ?? []) as IngredientOption[];
 }
 
+/**
+ * Get the ingredients attached to a product.
+ *
+ * We intentionally load product_ingredients and ingredients separately.
+ * This avoids relying on Supabase's generated nested relationship shape.
+ */
 export async function getProductIngredients(
   productId: string,
-): Promise<ProductIngredientRow[]> {
-  if (!productId) {
-    throw new Error("Product ID is missing.");
-  }
-
-  const { data, error } = await supabase
+): Promise<ProductIngredient[]> {
+  const { data: rows, error: rowsError } = await supabase
     .from("product_ingredients")
-    .select(`
-      id,
-      product_id,
-      ingredient_id,
-      amount,
-      organic_status,
-      source,
-      ingredient:ingredients (
-        id,
-        name,
-        slug
-      )
-    `)
+    .select(
+      `
+        product_id,
+        ingredient_id,
+        quantity,
+        unit
+      `,
+    )
     .eq("product_id", productId)
-    .order("id", { ascending: true });
+    .order("ingredient_id");
 
-  if (error) {
-    throw new Error(getErrorMessage(error));
+  if (rowsError) {
+    throw new Error(
+      `Unable to load product ingredients: ${getErrorMessage(rowsError)}`,
+    );
   }
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
+  const productRows = (rows ?? []) as ProductIngredientRow[];
+
+  if (productRows.length === 0) {
+    return [];
+  }
+
+  const ingredientIds = [
+    ...new Set(productRows.map((row) => row.ingredient_id)),
+  ];
+
+  const { data: ingredientRows, error: ingredientsError } = await supabase
+    .from("ingredients")
+    .select(
+      `
+        id,
+        slug,
+        name,
+        description,
+        short_description,
+        organic_status,
+        source,
+        origin,
+        preparation,
+        storage,
+        seasonality,
+        image_path,
+        color
+      `,
+    )
+    .in("id", ingredientIds);
+
+  if (ingredientsError) {
+    throw new Error(
+      `Unable to load ingredient details: ${getErrorMessage(
+        ingredientsError,
+      )}`,
+    );
+  }
+
+  const ingredientMap = new Map(
+    (ingredientRows ?? []).map((ingredient) => [
+      ingredient.id,
+      ingredient,
+    ]),
+  );
+
+  return productRows.map((row) => ({
     product_id: row.product_id,
     ingredient_id: row.ingredient_id,
-    amount: row.amount,
-    organic_status: row.organic_status as ProductIngredientStatus,
-    source: row.source,
-    ingredient: normalizeIngredientRelation(row.ingredient),
+    quantity: row.quantity,
+    unit: row.unit,
+    ingredient: ingredientMap.get(row.ingredient_id) ?? null,
   }));
 }
 
-export async function replaceProductIngredients(
+/**
+ * Save all ingredients belonging to a product.
+ *
+ * Existing recipe rows are replaced with the submitted set.
+ */
+export async function saveProductIngredients(
   productId: string,
-  rows: ProductIngredientInput[],
-): Promise<ProductIngredientRow[]> {
-  if (!productId) {
-    throw new Error("Product ID is missing.");
-  }
-
-  const unique = new Map<string, ProductIngredientInput>();
-
-  for (const row of rows) {
-    if (!row.ingredient_id) {
-      continue;
-    }
-
-    unique.set(row.ingredient_id, {
-      ingredient_id: row.ingredient_id,
-      amount: clean(row.amount),
-      organic_status: row.organic_status,
-      source: clean(row.source),
-    });
-  }
-
-  const normalized = [...unique.values()];
-
+  ingredients: Array<{
+    ingredient_id: string;
+    quantity: number | null;
+    unit: string | null;
+  }>,
+): Promise<void> {
   const { error: deleteError } = await supabase
     .from("product_ingredients")
     .delete()
     .eq("product_id", productId);
 
   if (deleteError) {
-    throw new Error(getErrorMessage(deleteError));
+    throw new Error(
+      `Unable to clear existing product ingredients: ${getErrorMessage(
+        deleteError,
+      )}`,
+    );
   }
 
-  if (normalized.length === 0) {
-    return [];
+  if (ingredients.length === 0) {
+    return;
   }
 
-  const payload = normalized.map((row) => ({
+  const rows = ingredients.map((ingredient) => ({
     product_id: productId,
-    ingredient_id: row.ingredient_id,
-    amount: row.amount,
-    organic_status: row.organic_status,
-    source: row.source,
+    ingredient_id: ingredient.ingredient_id,
+    quantity:
+      ingredient.quantity === null ||
+      ingredient.quantity === undefined ||
+      Number.isNaN(Number(ingredient.quantity))
+        ? null
+        : Number(ingredient.quantity),
+    unit: ingredient.unit?.trim() || null,
   }));
 
-  const { data, error: insertError } = await supabase
+  const { error: insertError } = await supabase
     .from("product_ingredients")
-    .insert(payload)
-    .select(`
-      id,
-      product_id,
-      ingredient_id,
-      amount,
-      organic_status,
-      source,
-      ingredient:ingredients (
-        id,
-        name,
-        slug
-      )
-    `);
+    .insert(rows);
 
   if (insertError) {
-    throw new Error(getErrorMessage(insertError));
+    throw new Error(
+      `Unable to save product ingredients: ${getErrorMessage(
+        insertError,
+      )}`,
+    );
   }
+}
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    product_id: row.product_id,
-    ingredient_id: row.ingredient_id,
-    amount: row.amount,
-    organic_status: row.organic_status as ProductIngredientStatus,
-    source: row.source,
-    ingredient: normalizeIngredientRelation(row.ingredient),
-  }));
+/**
+ * Backward-compatible name for callers that replace the complete recipe.
+ */
+export async function replaceProductIngredients(
+  productId: string,
+  ingredients: Array<{
+    ingredient_id: string;
+    quantity: number | null;
+    unit: string | null;
+  }>,
+): Promise<void> {
+  return saveProductIngredients(productId, ingredients);
+}
+
+/**
+ * Remove one ingredient from a product.
+ */
+export async function removeProductIngredient(
+  productId: string,
+  ingredientId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("product_ingredients")
+    .delete()
+    .eq("product_id", productId)
+    .eq("ingredient_id", ingredientId);
+
+  if (error) {
+    throw new Error(
+      `Unable to remove product ingredient: ${getErrorMessage(error)}`,
+    );
+  }
 }

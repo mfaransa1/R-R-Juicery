@@ -35,7 +35,7 @@ export default function ChessIntro() {
 
           <div className="relative aspect-[4/5] overflow-hidden bg-[#d8d2c7]">
             <Image
-              src="/images/chess/board.jpg"
+              src="/images/chess/board.jpeg"
               alt="Chess board at The House"
               fill
               className="object-cover transition duration-700 hover:scale-105"

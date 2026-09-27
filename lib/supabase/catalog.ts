@@ -5,56 +5,69 @@ export type PublicProduct = {
   slug: string;
   name: string;
   category: string;
-  category_label?: string | null;
-  description?: string | null;
-  note?: string | null;
+  category_label: string;
+  description: string;
+  detailed_description: string | null;
+  note: string;
   price: number;
   size: string;
-  image_path?: string | null;
-  video_path?: string | null;
-  tone?: string | null;
-  featured?: boolean | null;
+  preparation: string;
+  freshness: string;
+  additives: string;
+  concentrate: string;
+  health_benefits: string[];
+  featured: boolean;
+  tone: string | null;
+  image_path: string | null;
+  video_path: string | null;
   active: boolean;
 };
 
-export async function getPublicProducts(): Promise<PublicProduct[]> {
-  const supabase = createClient();
+const PUBLIC_FIELDS = `
+  id,
+  slug,
+  name,
+  category,
+  category_label,
+  description,
+  detailed_description,
+  note,
+  price,
+  size,
+  preparation,
+  freshness,
+  additives,
+  concentrate,
+  health_benefits,
+  featured,
+  tone,
+  image_path,
+  video_path,
+  active
+`;
 
+export async function getPublicProducts() {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("products")
-    .select(
-      "id, slug, name, category, category_label, description, note, price, size, image_path, video_path, tone, featured, active"
-    )
+    .select(PUBLIC_FIELDS)
     .eq("active", true)
     .order("featured", { ascending: false })
-    .order("name", { ascending: true });
+    .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Failed to load public products:", error);
-    throw new Error("Unable to load the R&R menu.");
-  }
-
+  if (error) throw error;
   return (data ?? []) as PublicProduct[];
 }
 
-export async function getPublicProductBySlug(
-  slug: string
-): Promise<PublicProduct | null> {
+export async function getPublicProductBySlug(slug: string) {
   const supabase = createClient();
-
   const { data, error } = await supabase
     .from("products")
-    .select(
-      "id, slug, name, category, category_label, description, note, price, size, image_path, video_path, tone, featured, active"
-    )
+    .select(PUBLIC_FIELDS)
     .eq("slug", slug)
     .eq("active", true)
     .maybeSingle();
 
-  if (error) {
-    console.error("Failed to load product:", error);
-    throw new Error("Unable to load this product.");
-  }
-
-  return data as PublicProduct | null;
+  if (error) throw error;
+  return (data ?? null) as PublicProduct | null;
 }

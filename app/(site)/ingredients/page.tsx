@@ -1,25 +1,20 @@
-import IngredientsHero from "@/components/ingredients/IngredientsHero";
-import IngredientExplorer from "@/components/ingredients/IngredientExplorer";
-import IngredientPromise from "@/components/ingredients/IngredientPromise";
-import IngredientSourcing from "@/components/ingredients/IngredientSourcing";
-import { ingredients } from "@/data/ingredients";
+"use client";
 
-export const metadata = {
-  title: "Ingredients | The Rook & Reed Juicery",
-  description:
-    "Explore the ingredients behind The Rook & Reed Juicery.",
-};
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { getPublicIngredients, type PublicIngredient } from "@/lib/supabase/publicIngredients";
 
 export default function IngredientsPage() {
-  return (
-    <main>
-      <IngredientsHero />
+  const [ingredients, setIngredients] = useState<PublicIngredient[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-      <IngredientExplorer ingredients={ingredients} />
+  useEffect(() => { let mounted = true; (async () => { try { const data = await getPublicIngredients(); if (mounted) setIngredients(data); } catch (err) { console.error("PUBLIC INGREDIENTS ERROR:", err); if (mounted) setError(err instanceof Error ? err.message : "Unable to load ingredients."); } finally { if (mounted) setLoading(false); } })(); return () => { mounted = false; }; }, []);
 
-      <IngredientPromise />
+  const filtered = useMemo(() => { const q = search.trim().toLowerCase(); if (!q) return ingredients; return ingredients.filter((ingredient) => [ingredient.name, ingredient.category ?? "", ingredient.short_description ?? "", ingredient.origin ?? ""].join(" ").toLowerCase().includes(q)); }, [ingredients, search]);
 
-      <IngredientSourcing />
-    </main>
-  );
+  return <main className="bg-[var(--rr-paper)]"><section className="border-b border-black/10"><div className="mx-auto max-w-[1440px] px-5 pb-16 pt-24 sm:px-8 lg:px-14 lg:pb-20 lg:pt-32"><p className="rr-kicker">KNOW YOUR INGREDIENT</p><div className="mt-5 grid gap-8 lg:grid-cols-[1fr_0.65fr] lg:items-end"><h1 className="rr-editorial max-w-5xl text-6xl leading-[0.88] sm:text-8xl">What goes<br />into the glass.</h1><p className="max-w-xl text-sm leading-7 text-black/60">Explore the ingredients behind R&amp;R juices. Sourcing, preparation, seasonality and organic status are shown only when the information has been entered and verified.</p></div><div className="mt-12 flex max-w-xl items-center gap-3 border-b border-black/20 pb-3"><Search className="h-4 w-4 text-black/40" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search ingredients" className="w-full bg-transparent text-sm outline-none placeholder:text-black/35" /></div></div></section><section><div className="mx-auto max-w-[1440px] px-5 py-12 sm:px-8 lg:px-14 lg:py-20">{error && <div className="border border-red-900/20 bg-red-50 p-4 text-sm text-red-900">{error}</div>}{loading ? <div className="flex min-h-[35vh] items-center justify-center"><p className="text-[10px] font-semibold uppercase tracking-[0.2em]">Loading ingredients</p></div> : filtered.length ? <div className="grid gap-px bg-black/10 sm:grid-cols-2 lg:grid-cols-3">{filtered.map((ingredient) => <Link key={ingredient.id} href={`/ingredients/${ingredient.slug}`} className="group bg-[var(--rr-paper)]"><div className="relative aspect-[4/5] overflow-hidden bg-[#e7e2d8]"><Image src={ingredient.image_path || `/images/ingredients/${ingredient.slug}.jpg`} alt={ingredient.name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.03]" /><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-6 pt-20"><p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/65">{ingredient.category || "Ingredient"}</p><h2 className="mt-2 font-serif text-3xl text-white">{ingredient.name}</h2></div></div><div className="flex items-end justify-between gap-4 p-6"><div><p className="text-sm leading-6 text-black/55">{ingredient.short_description || ingredient.description || "Ingredient record"}</p><p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.15em] text-black/40">{ingredient.organic_status.replaceAll("_", " ")}</p></div><ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" /></div></Link>)}</div> : <div className="border border-black/10 bg-white p-10 text-center"><p className="text-sm text-black/55">No ingredients match your search.</p></div>}</div></section></main>;
 }

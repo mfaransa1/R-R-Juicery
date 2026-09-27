@@ -10,9 +10,9 @@ export type AdminIngredient = {
   id: string;
   slug: string;
   name: string;
-  category: string | null;
-  description: string | null;
-  short_description: string | null;
+  category: string;
+  description: string;
+  short_description: string;
   organic_status: OrganicStatus;
   source: string | null;
   origin: string | null;
@@ -24,89 +24,43 @@ export type AdminIngredient = {
   color: string | null;
   created_at: string;
   updated_at: string;
+  supplier_id?: string | null;
+  supplier_name?: string | null;
 };
 
 export type IngredientInput = {
   slug: string;
   name: string;
-  category?: string | null;
-  description?: string | null;
-  short_description?: string | null;
+  category: string;
+  description: string;
+  short_description: string;
   organic_status: OrganicStatus;
-  source?: string | null;
-  origin?: string | null;
-  preparation?: string | null;
-  storage?: string | null;
-  seasonality?: string | null;
-  image_path?: string | null;
-  video_path?: string | null;
-  color?: string | null;
+  source: string | null;
+  origin: string | null;
+  preparation: string | null;
+  storage: string | null;
+  seasonality: string | null;
+  image_path: string | null;
+  video_path: string | null;
+  color: string | null;
+};
+
+export type SupplierOption = {
+  id: string;
+  name: string;
+  active: boolean;
 };
 
 const supabase = createClient();
 
-/**
- * Convert empty strings to null for optional database fields.
- * This keeps the database clean and avoids inconsistent empty values.
- */
-function nullable(value: string | null | undefined) {
-  const trimmed = value?.trim();
-
-  return trimmed ? trimmed : null;
-}
-
-/**
- * Prepare the exact fields that belong in the ingredients table.
- */
-function normalizeIngredient(input: IngredientInput) {
-  return {
-    slug: input.slug.trim(),
-    name: input.name.trim(),
-
-    category: nullable(input.category),
-    description: nullable(input.description),
-    short_description: nullable(input.short_description),
-
-    organic_status: input.organic_status,
-
-    source: nullable(input.source),
-    origin: nullable(input.origin),
-    preparation: nullable(input.preparation),
-    storage: nullable(input.storage),
-    seasonality: nullable(input.seasonality),
-
-    image_path: nullable(input.image_path),
-    video_path: nullable(input.video_path),
-    color: nullable(input.color),
-  };
-}
-
-/**
- * Convert Supabase errors into messages that are actually useful
- * inside the admin interface.
- */
-function getSupabaseErrorMessage(error: {
+function getErrorMessage(error: {
   message?: string;
   details?: string;
   hint?: string;
   code?: string;
 }) {
-  const message = error.message || "Unknown Supabase error.";
-
-  if (error.code === "23505") {
-    return `An ingredient with this slug already exists. Please use a different slug. (${message})`;
-  }
-
-  if (error.code === "42501") {
-    return `Supabase rejected this operation because of permissions/RLS. Make sure the logged-in account has a staff or admin role. (${message})`;
-  }
-
-  if (error.code === "23503") {
-    return `This ingredient references another record that does not exist. (${message})`;
-  }
-
   return [
-    message,
+    error.message || "Supabase request failed.",
     error.details ? `Details: ${error.details}` : "",
     error.hint ? `Hint: ${error.hint}` : "",
     error.code ? `Code: ${error.code}` : "",
@@ -115,202 +69,181 @@ function getSupabaseErrorMessage(error: {
     .join(" ");
 }
 
-/**
- * Get all ingredients.
- */
 export async function getAdminIngredients(): Promise<AdminIngredient[]> {
   const { data, error } = await supabase
     .from("ingredients")
-    .select(`
-      id,
-      slug,
-      name,
-      category,
-      description,
-      short_description,
-      organic_status,
-      source,
-      origin,
-      preparation,
-      storage,
-      seasonality,
-      image_path,
-      video_path,
-      color,
-      created_at,
-      updated_at
-    `)
+    .select("*")
     .order("name", { ascending: true });
 
-  if (error) {
-    throw new Error(getSupabaseErrorMessage(error));
+  if (error) throw new Error(getErrorMessage(error));
+
+  const ingredients = (data ?? []) as AdminIngredient[];
+  if (!ingredients.length) return [];
+
+  const ingredientIds = ingredients.map((item) => item.id);
+
+  const { data: links, error: linkError } = await supabase
+    .from("supplier_ingredients")
+    .select("ingredient_id,supplier_id,primary_supplier")
+    .in("ingredient_id", ingredientIds)
+    .eq("primary_supplier", true);
+
+  if (linkError) throw new Error(getErrorMessage(linkError));
+
+  const supplierIds = [...new Set((links ?? []).map((row) => row.supplier_id))];
+  let suppliers: { id: string; name: string }[] = [];
+
+  if (supplierIds.length) {
+    const { data: supplierRows, error: supplierError } = await supabase
+      .from("suppliers")
+      .select("id,name")
+      .in("id", supplierIds);
+
+    if (supplierError) throw new Error(getErrorMessage(supplierError));
+    suppliers = supplierRows ?? [];
   }
 
-  return (data ?? []) as AdminIngredient[];
+  const supplierMap = new Map(suppliers.map((supplier) => [supplier.id, supplier]));
+  const linkMap = new Map((links ?? []).map((link) => [link.ingredient_id, link]));
+
+  return ingredients.map((ingredient) => {
+    const link = linkMap.get(ingredient.id);
+    const supplier = link ? supplierMap.get(link.supplier_id) : undefined;
+
+    return {
+      ...ingredient,
+      supplier_id: link?.supplier_id ?? null,
+      supplier_name: supplier?.name ?? null,
+    };
+  });
 }
 
-/**
- * Create a new ingredient.
- */
-export async function createAdminIngredient(
-  input: IngredientInput,
-): Promise<AdminIngredient> {
-  if (!input.name.trim()) {
-    throw new Error("Ingredient name is required.");
-  }
-
-  if (!input.slug.trim()) {
-    throw new Error("Ingredient slug is required.");
-  }
-
-  const payload = normalizeIngredient(input);
-
+export async function getAdminIngredient(id: string): Promise<AdminIngredient | null> {
   const { data, error } = await supabase
     .from("ingredients")
-    .insert(payload)
-    .select(`
-      id,
-      slug,
-      name,
-      category,
-      description,
-      short_description,
-      organic_status,
-      source,
-      origin,
-      preparation,
-      storage,
-      seasonality,
-      image_path,
-      video_path,
-      color,
-      created_at,
-      updated_at
-    `)
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(getErrorMessage(error));
+  return data as AdminIngredient | null;
+}
+
+export async function getIngredientPrimarySupplierId(
+  ingredientId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("supplier_ingredients")
+    .select("supplier_id")
+    .eq("ingredient_id", ingredientId)
+    .eq("primary_supplier", true)
+    .maybeSingle();
+
+  if (error) throw new Error(getErrorMessage(error));
+  return data?.supplier_id ?? null;
+}
+
+export async function getActiveSuppliers(): Promise<SupplierOption[]> {
+  const { data, error } = await supabase
+    .from("suppliers")
+    .select("id,name,active")
+    .eq("active", true)
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(getErrorMessage(error));
+  return (data ?? []) as SupplierOption[];
+}
+
+export async function createAdminIngredient(input: IngredientInput): Promise<AdminIngredient> {
+  const { data, error } = await supabase
+    .from("ingredients")
+    .insert(input)
+    .select("*")
     .single();
 
-  if (error) {
-    throw new Error(getSupabaseErrorMessage(error));
-  }
-
-  if (!data) {
-    throw new Error("Ingredient was created but no record was returned.");
-  }
-
+  if (error) throw new Error(getErrorMessage(error));
   return data as AdminIngredient;
 }
 
-/**
- * Update an existing ingredient.
- */
 export async function updateAdminIngredient(
   id: string,
   input: Partial<IngredientInput>,
 ): Promise<AdminIngredient> {
-  if (!id) {
-    throw new Error("Ingredient ID is missing.");
-  }
-
-  if (input.name !== undefined && !input.name.trim()) {
-    throw new Error("Ingredient name is required.");
-  }
-
-  if (input.slug !== undefined && !input.slug.trim()) {
-    throw new Error("Ingredient slug is required.");
-  }
-
-  const payload = {
-    ...(input.slug !== undefined
-      ? { slug: input.slug.trim() }
-      : {}),
-
-    ...(input.name !== undefined
-      ? { name: input.name.trim() }
-      : {}),
-
-    ...(input.category !== undefined
-      ? { category: nullable(input.category) }
-      : {}),
-
-    ...(input.description !== undefined
-      ? { description: nullable(input.description) }
-      : {}),
-
-    ...(input.short_description !== undefined
-      ? { short_description: nullable(input.short_description) }
-      : {}),
-
-    ...(input.organic_status !== undefined
-      ? { organic_status: input.organic_status }
-      : {}),
-
-    ...(input.source !== undefined
-      ? { source: nullable(input.source) }
-      : {}),
-
-    ...(input.origin !== undefined
-      ? { origin: nullable(input.origin) }
-      : {}),
-
-    ...(input.preparation !== undefined
-      ? { preparation: nullable(input.preparation) }
-      : {}),
-
-    ...(input.storage !== undefined
-      ? { storage: nullable(input.storage) }
-      : {}),
-
-    ...(input.seasonality !== undefined
-      ? { seasonality: nullable(input.seasonality) }
-      : {}),
-
-    ...(input.image_path !== undefined
-      ? { image_path: nullable(input.image_path) }
-      : {}),
-
-    ...(input.video_path !== undefined
-      ? { video_path: nullable(input.video_path) }
-      : {}),
-
-    ...(input.color !== undefined
-      ? { color: nullable(input.color) }
-      : {}),
-
-    updated_at: new Date().toISOString(),
-  };
-
   const { data, error } = await supabase
     .from("ingredients")
-    .update(payload)
+    .update({
+      ...input,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id)
-    .select(`
-      id,
-      slug,
-      name,
-      category,
-      description,
-      short_description,
-      organic_status,
-      source,
-      origin,
-      preparation,
-      storage,
-      seasonality,
-      image_path,
-      video_path,
-      color,
-      created_at,
-      updated_at
-    `)
+    .select("*")
     .single();
 
-  if (error) {
-    throw new Error(getSupabaseErrorMessage(error));
-  }
-
-  if (!data) {
-    throw new Error("Ingredient update completed but no record was returned.");
-  }
-
+  if (error) throw new Error(getErrorMessage(error));
   return data as AdminIngredient;
+}
+
+export async function saveIngredientPrimarySupplier(
+  ingredientId: string,
+  supplierId: string | null,
+): Promise<void> {
+  const { error: deleteError } = await supabase
+    .from("supplier_ingredients")
+    .delete()
+    .eq("ingredient_id", ingredientId);
+
+  if (deleteError) throw new Error(getErrorMessage(deleteError));
+
+  if (!supplierId) return;
+
+  const { data: supplier, error: supplierError } = await supabase
+    .from("suppliers")
+    .select("id,name")
+    .eq("id", supplierId)
+    .eq("active", true)
+    .single();
+
+  if (supplierError) throw new Error(getErrorMessage(supplierError));
+
+  const { error } = await supabase
+    .from("supplier_ingredients")
+    .insert({
+      supplier_id: supplier.id,
+      ingredient_id: ingredientId,
+      supplier_reference: null,
+      notes: null,
+      primary_supplier: true,
+    });
+
+  if (error) throw new Error(getErrorMessage(error));
+
+  // Keep the legacy/source text synchronized with the selected supplier.
+  const { error: sourceError } = await supabase
+    .from("ingredients")
+    .update({
+      source: supplier.name,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", ingredientId);
+
+  if (sourceError) throw new Error(getErrorMessage(sourceError));
+}
+
+export async function deleteAdminIngredient(id: string): Promise<void> {
+  const { error } = await supabase.from("ingredients").delete().eq("id", id);
+  if (error) throw new Error(getErrorMessage(error));
+}
+
+export async function updateIngredientImage(
+  id: string,
+  imagePath: string | null,
+): Promise<AdminIngredient> {
+  return updateAdminIngredient(id, { image_path: imagePath });
+}
+
+export async function updateIngredientVideo(
+  id: string,
+  videoPath: string | null,
+): Promise<AdminIngredient> {
+  return updateAdminIngredient(id, { video_path: videoPath });
 }

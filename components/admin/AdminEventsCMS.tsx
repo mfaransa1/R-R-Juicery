@@ -1,156 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
-import {
-  ContentEvent,
-  getAdminEvents,
-  saveAdminEvent,
-} from "@/lib/supabase/content";
+import { useEffect, useMemo, useState } from "react";
+import { Edit3, Loader2, Plus, RefreshCw, X } from "lucide-react";
+import { createAdminEvent, getAdminEvents, updateAdminEvent, type ContentEvent } from "@/lib/supabase/content";
+import ContentImageUpload from "./ContentImageUpload";
 
-const empty = {
-  title: "",
-  slug: "",
-  description: "",
-  category: "R&R",
-  starts_at: "",
-  ends_at: "",
-  location: "",
-  image_path: "",
-  active: true,
-};
+const categories = ["R&R", "JAZZ", "CHESS", "BOOKS", "COMMUNITY", "TASTING", "WORKSHOP", "OTHER"];
+const empty = { title:"", slug:"", host:"Rook & Reed", category:"R&R", frequency:"", date_label:"", time_label:"", description:"", location:"", image_path:"", video_path:"", starts_at:"", ends_at:"", active:true, featured:false };
 
 export default function AdminEventsCMS() {
-  const [events, setEvents] = useState<ContentEvent[]>([]);
-  const [form, setForm] = useState(empty);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  async function load() {
-    setLoading(true);
-    setError("");
-    try {
-      setEvents(await getAdminEvents());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load events.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
-
-  function edit(event: ContentEvent) {
-    setEditing(event.id);
-    setForm({
-      title: event.title,
-      slug: event.slug || "",
-      description: event.description || "",
-      category: event.category || "R&R",
-      starts_at: event.starts_at ? event.starts_at.slice(0, 16) : "",
-      ends_at: event.ends_at ? event.ends_at.slice(0, 16) : "",
-      location: event.location || "",
-      image_path: event.image_path || "",
-      active: event.active,
-    });
-  }
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.title.trim()) return;
-
-    setSaving(true);
-    setError("");
-
-    try {
-      await saveAdminEvent({
-        id: editing || undefined,
-        ...form,
-        starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
-        ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
-      });
-
-      setEditing(null);
-      setForm(empty);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save event.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <section className="space-y-6">
-      <header className="flex flex-col gap-4 border-b border-black/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/40">
-            Content · Events
-          </p>
-          <h1 className="mt-2 font-serif text-4xl">Events.</h1>
-          <p className="mt-2 text-sm text-black/50">
-            Publish and maintain the House calendar.
-          </p>
-        </div>
-        <button onClick={() => void load()} className="inline-flex items-center gap-2 border border-black/15 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em]">
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </header>
-
-      {error && <div className="border border-red-900/20 bg-red-50 p-4 text-sm text-red-900">{error}</div>}
-
-      <form onSubmit={submit} className="border border-black/10 bg-white p-6">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-black/40">
-          {editing ? "Edit event" : "New event"}
-        </p>
-
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
-          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Event title" className="border border-black/15 px-4 py-3 text-sm md:col-span-2" />
-          <input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="Slug" className="border border-black/15 px-4 py-3 text-sm" />
-          <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Category e.g. MUSIC, CHESS, BOOKS" className="border border-black/15 px-4 py-3 text-sm" />
-          <input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} className="border border-black/15 px-4 py-3 text-sm" />
-          <input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} className="border border-black/15 px-4 py-3 text-sm" />
-          <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Location" className="border border-black/15 px-4 py-3 text-sm" />
-          <input value={form.image_path} onChange={(e) => setForm({ ...form, image_path: e.target.value })} placeholder="/images/events/..." className="border border-black/15 px-4 py-3 text-sm" />
-          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" rows={4} className="border border-black/15 px-4 py-3 text-sm md:col-span-2" />
-        </div>
-
-        <label className="mt-5 flex items-center gap-3 text-sm">
-          <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
-          Published / active
-        </label>
-
-        <button disabled={saving} className="mt-5 border border-black bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] !text-white hover:bg-white hover:!text-black">
-          {saving ? "Saving..." : editing ? "Update event" : "Publish event"}
-        </button>
-      </form>
-
-      <div className="overflow-x-auto border border-black/10 bg-white">
-        {loading ? (
-          <div className="flex min-h-40 items-center justify-center"><Loader2 size={20} className="animate-spin" /></div>
-        ) : (
-          <table className="w-full min-w-[900px] text-left">
-            <thead className="border-b border-black/10 bg-[#f5f1e8] text-[10px] uppercase tracking-[0.14em] text-black/45">
-              <tr><th className="px-5 py-4">Event</th><th className="px-5 py-4">Category</th><th className="px-5 py-4">Date</th><th className="px-5 py-4">State</th><th className="px-5 py-4 text-right">Action</th></tr>
-            </thead>
-            <tbody>
-              {events.map((event) => (
-                <tr key={event.id} className="border-b border-black/10 last:border-0">
-                  <td className="px-5 py-5 font-serif text-lg">{event.title}</td>
-                  <td className="px-5 py-5 text-xs uppercase tracking-[0.1em]">{event.category || "—"}</td>
-                  <td className="px-5 py-5 text-sm">{event.starts_at ? new Date(event.starts_at).toLocaleString("en-KE") : "TBC"}</td>
-                  <td className="px-5 py-5 text-xs uppercase tracking-[0.1em]">{event.active ? "Published" : "Draft"}</td>
-                  <td className="px-5 py-5 text-right"><button onClick={() => edit(event)} className="border border-black/15 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.1em]">Edit</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </section>
-  );
+  const [events,setEvents]=useState<ContentEvent[]>([]); const [form,setForm]=useState(empty); const [editing,setEditing]=useState<string|null>(null); const [open,setOpen]=useState(false); const [loading,setLoading]=useState(true); const [saving,setSaving]=useState(false); const [error,setError]=useState("");
+  async function load(){setLoading(true);setError("");try{setEvents(await getAdminEvents())}catch(e){setError(e instanceof Error?e.message:"Unable to load events.")}finally{setLoading(false)}}
+  useEffect(()=>{void load()},[]);
+  const sorted=useMemo(()=>events,[events]);
+  function reset(){setEditing(null);setForm(empty);setOpen(false)}
+  function edit(e:ContentEvent){setEditing(e.id);setForm({title:e.title,slug:e.slug||"",host:e.host||"Rook & Reed",category:e.category||"R&R",frequency:e.frequency||"",date_label:e.date_label||"",time_label:e.time_label||"",description:e.description||"",location:e.location||"",image_path:e.image_path||"",video_path:e.video_path||"",starts_at:e.starts_at?e.starts_at.slice(0,16):"",ends_at:e.ends_at?e.ends_at.slice(0,16):"",active:e.active,featured:e.featured});setOpen(true)}
+  function slugify(v:string){return v.toLowerCase().trim().replace(/[’']/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")}
+  async function submit(e:React.FormEvent){e.preventDefault();if(!form.title.trim())return;setSaving(true);setError("");try{const payload={...form,slug:form.slug||slugify(form.title),starts_at:form.starts_at?new Date(form.starts_at).toISOString():null,ends_at:form.ends_at?new Date(form.ends_at).toISOString():null};if(editing)await updateAdminEvent(editing,payload);else await createAdminEvent(payload);reset();await load()}catch(err){setError(err instanceof Error?err.message:"Unable to save event.")}finally{setSaving(false)}}
+  return <section className="space-y-7">
+    <header className="flex flex-col gap-4 border-b border-black/10 pb-7 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-black/40">Content · Events</p><h1 className="mt-2 font-serif text-4xl">Events.</h1><p className="mt-2 text-sm text-black/50">Manage the public R&R calendar without editing code.</p></div><div className="flex gap-2"><button type="button" onClick={()=>{setEditing(null);setForm(empty);setOpen(true)}} className="inline-flex items-center gap-2 bg-black px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] !text-white"><Plus size={14}/> New event</button><button type="button" onClick={()=>void load()} className="inline-flex items-center gap-2 border border-black/15 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em]"><RefreshCw size={14}/> Refresh</button></div></header>
+    {error&&<div className="border border-red-900/20 bg-red-50 p-4 text-sm text-red-900">{error}</div>}
+    <div className="overflow-x-auto border border-black/10 bg-white">{loading?<div className="flex min-h-40 items-center justify-center"><Loader2 size={20} className="animate-spin"/></div>:<table className="w-full min-w-[900px] text-left"><thead className="border-b border-black/10 bg-[#f5f1e8] text-[10px] uppercase tracking-[0.14em] text-black/45"><tr><th className="px-5 py-4">Event</th><th className="px-5 py-4">Category</th><th className="px-5 py-4">Date</th><th className="px-5 py-4">State</th><th className="px-5 py-4 text-right">Action</th></tr></thead><tbody>{sorted.map(e=><tr key={e.id} className="border-b border-black/10 last:border-0"><td className="px-5 py-5"><div className="font-serif text-lg">{e.title}</div><div className="mt-1 text-xs text-black/40">{e.host}</div></td><td className="px-5 py-5 text-xs uppercase tracking-[.1em]">{e.category}</td><td className="px-5 py-5 text-sm">{e.starts_at?new Date(e.starts_at).toLocaleString("en-KE"):e.date_label||"TBC"}</td><td className="px-5 py-5 text-xs uppercase tracking-[.1em]">{e.active?"Published":"Draft"}{e.featured?" · Featured":""}</td><td className="px-5 py-5 text-right"><button type="button" onClick={()=>edit(e)} className="inline-flex items-center gap-2 border border-black/15 px-3 py-2 text-[9px] font-semibold uppercase tracking-[.1em]"><Edit3 size={12}/> Edit</button></td></tr>)}</tbody></table>}</div>
+    {open&&<div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4 md:p-8"><div className="mx-auto max-w-5xl bg-[#f5f1e8]"><div className="flex items-center justify-between border-b border-black/10 px-6 py-5 md:px-8"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-black/40">Event record</p><h2 className="mt-1 font-serif text-3xl">{editing?form.title||"Edit event":"New event"}</h2></div><button type="button" onClick={reset} className="border border-black/15 p-2"><X size={18}/></button></div><form onSubmit={submit} className="space-y-7 p-6 md:p-8">
+      <div className="grid gap-5 md:grid-cols-2"><Field label="Title"><input required value={form.title} onChange={e=>setForm({...form,title:e.target.value,slug:form.slug||slugify(e.target.value)})} className={input}/></Field><Field label="Slug"><input required value={form.slug} onChange={e=>setForm({...form,slug:slugify(e.target.value)})} className={input}/></Field><Field label="Host"><input value={form.host} onChange={e=>setForm({...form,host:e.target.value})} className={input}/></Field><Field label="Category"><select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className={input}>{categories.map(x=><option key={x}>{x}</option>)}</select></Field><Field label="Start"><input type="datetime-local" value={form.starts_at} onChange={e=>setForm({...form,starts_at:e.target.value})} className={input}/></Field><Field label="End"><input type="datetime-local" value={form.ends_at} onChange={e=>setForm({...form,ends_at:e.target.value})} className={input}/></Field><Field label="Frequency"><input value={form.frequency} onChange={e=>setForm({...form,frequency:e.target.value})} placeholder="EVERY SATURDAY / AS ANNOUNCED" className={input}/></Field><Field label="Location"><input value={form.location} onChange={e=>setForm({...form,location:e.target.value})} className={input}/></Field><Field label="Date label"><input value={form.date_label} onChange={e=>setForm({...form,date_label:e.target.value})} placeholder="SATURDAY · 12 OCT" className={input}/></Field><Field label="Time label"><input value={form.time_label} onChange={e=>setForm({...form,time_label:e.target.value})} placeholder="2:00 PM – 6:00 PM" className={input}/></Field></div>
+      <Field label="Description"><textarea required rows={5} value={form.description} onChange={e=>setForm({...form,description:e.target.value})} className={input}/></Field>
+      <ContentImageUpload bucket="event-images" value={form.image_path} prefix={form.slug||"event"} onChange={v=>setForm({...form,image_path:v})}/>
+      <Field label="Video path"><input value={form.video_path} onChange={e=>setForm({...form,video_path:e.target.value})} placeholder="/videos/events/example.mp4" className={input}/></Field>
+      <div className="flex flex-wrap gap-6"><label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={form.active} onChange={e=>setForm({...form,active:e.target.checked})}/> Published / active</label><label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={form.featured} onChange={e=>setForm({...form,featured:e.target.checked})}/> Featured</label></div>
+      <div className="flex justify-end gap-3 border-t border-black/10 pt-6"><button type="button" onClick={reset} className="border border-black/15 px-5 py-3 text-xs font-semibold uppercase tracking-[.14em]">Cancel</button><button disabled={saving} className="border border-black bg-black px-5 py-3 text-xs font-semibold uppercase tracking-[.14em] !text-white">{saving?"Saving...":editing?"Update event":"Publish event"}</button></div>
+    </form></div></div>}
+  </section>
 }
+function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="block"><span className="mb-2 block text-[10px] font-semibold uppercase tracking-[.18em] text-black/45">{label}</span>{children}</label>}
+const input="w-full border border-black/15 bg-white px-4 py-3 text-sm outline-none focus:border-black";

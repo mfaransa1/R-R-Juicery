@@ -1,5 +1,3 @@
-"use client";
-
 import ContactForm from "./ContactForm";
 
 export default function ContactMain() {
@@ -18,8 +16,8 @@ export default function ContactMain() {
           </h2>
 
           <p className="mt-8 max-w-md text-lg leading-relaxed text-black/55">
-            For general questions, events, partnerships, feedback or
-            anything else R&R-related, send us a message.
+            For general questions, events, partnerships, feedback or anything
+            else R&R-related, send us a message.
           </p>
 
           <div className="mt-12 border-t border-black/15 pt-7">
@@ -40,7 +38,7 @@ export default function ContactMain() {
               rel="noreferrer"
               className="mt-2 block font-serif text-2xl tracking-[-0.03em] transition hover:text-black/50"
             >
-              0758 038 852
+              +254 758 038 852
             </a>
           </div>
         </div>

@@ -6,35 +6,28 @@ import {
   getIngredientOptions,
   getProductIngredients,
   replaceProductIngredients,
-  IngredientOption,
-  ProductIngredientInput,
+  type IngredientOption,
 } from "@/lib/supabase/productIngredients";
 
-type EditorRow = ProductIngredientInput & {
+type EditorRow = {
   localId: string;
+  ingredient_id: string;
+  quantity: string;
+  unit: string;
 };
 
-const statuses: ProductIngredientInput["organic_status"][] = [
-  "verified_organic",
-  "supplier_claimed",
-  "conventional",
-  "unknown",
-];
-
-const statusLabel = (value: string) => value.replaceAll("_", " ");
+const units = ["g", "kg", "ml", "L", "piece", "pieces", "tbsp", "tsp", "unit"];
 
 function makeRow(
   ingredientId = "",
-  amount = "",
-  organicStatus: ProductIngredientInput["organic_status"] = "unknown",
-  source = "",
+  quantity: number | null = null,
+  unit = "g",
 ): EditorRow {
   return {
     localId: `${Date.now()}-${Math.random()}`,
     ingredient_id: ingredientId,
-    amount,
-    organic_status: organicStatus,
-    source,
+    quantity: quantity === null ? "" : String(quantity),
+    unit: unit || "g",
   };
 }
 
@@ -75,12 +68,7 @@ export default function ProductIngredientEditor({
         setRows(
           current.length
             ? current.map((row) =>
-                makeRow(
-                  row.ingredient_id,
-                  row.amount ?? "",
-                  row.organic_status,
-                  row.source ?? "",
-                ),
+                makeRow(row.ingredient_id, row.quantity, row.unit ?? "g"),
               )
             : [makeRow()],
         );
@@ -110,7 +98,7 @@ export default function ProductIngredientEditor({
 
   function updateRow(
     localId: string,
-    key: keyof ProductIngredientInput,
+    key: keyof Omit<EditorRow, "localId">,
     value: string,
   ) {
     setRows((current) =>
@@ -154,7 +142,12 @@ export default function ProductIngredientEditor({
     try {
       await replaceProductIngredients(
         productId,
-        selected.map(({ localId: _localId, ...row }) => row),
+        selected.map((row) => ({
+          ingredient_id: row.ingredient_id,
+          quantity:
+            row.quantity.trim() === "" ? null : Number(row.quantity),
+          unit: row.unit.trim() || null,
+        })),
       );
 
       setNotice("Product ingredients saved.");
@@ -267,60 +260,44 @@ export default function ProductIngredientEditor({
 
                     <label className="block">
                       <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-black/45">
-                        Amount
+                        Quantity
                       </span>
                       <input
-                        value={row.amount ?? ""}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.quantity}
                         onChange={(event) =>
                           updateRow(
                             row.localId,
-                            "amount",
+                            "quantity",
                             event.target.value,
                           )
                         }
-                        placeholder="e.g. 250g"
+                        placeholder="e.g. 250"
                         className="w-full border border-black/15 bg-white px-3 py-3 text-sm outline-none focus:border-black"
                       />
                     </label>
 
                     <label className="block">
                       <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-black/45">
-                        Organic status
+                        Unit
                       </span>
                       <select
-                        value={row.organic_status}
+                        value={row.unit}
                         onChange={(event) =>
-                          updateRow(
-                            row.localId,
-                            "organic_status",
-                            event.target
-                              .value as ProductIngredientInput["organic_status"],
-                          )
+                          updateRow(row.localId, "unit", event.target.value)
                         }
                         className="w-full border border-black/15 bg-white px-3 py-3 text-sm outline-none focus:border-black"
                       >
-                        {statuses.map((status) => (
-                          <option key={status} value={status}>
-                            {statusLabel(status)}
+                        {units.map((unit) => (
+                          <option key={unit} value={unit}>
+                            {unit}
                           </option>
                         ))}
                       </select>
                     </label>
                   </div>
-
-                  <label className="mt-4 block">
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.14em] text-black/45">
-                      Source
-                    </span>
-                    <input
-                      value={row.source ?? ""}
-                      onChange={(event) =>
-                        updateRow(row.localId, "source", event.target.value)
-                      }
-                      placeholder="REQUIRED INPUT"
-                      className="w-full border border-black/15 bg-white px-3 py-3 text-sm outline-none focus:border-black"
-                    />
-                  </label>
                 </div>
               );
             })}

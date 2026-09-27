@@ -13,14 +13,15 @@ import {
 import {
   advanceProductionRun,
   consumeInventoryForProduction,
-  createBatchFromProduction,
   createProductionRun,
   getProductionOperations,
   getProductionConsumption,
   type InventoryItem,
   type ProductionRun,
   type ProductionStatus,
+  type Option,
 } from "@/lib/supabase/phase6Operations";
+import { createBatchAutomatically, type CreatedBatch } from "@/lib/supabase/batchCreation";
 
 const statuses: ProductionStatus[] = [
   "queued",
@@ -38,6 +39,8 @@ function label(value: string) {
 export default function AdminProductionOperations() {
   const [runs, setRuns] = useState<ProductionRun[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [products, setProducts] = useState<Option[]>([]);
+  const [orders, setOrders] = useState<Option[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -47,7 +50,7 @@ export default function AdminProductionOperations() {
   const [selectedRun, setSelectedRun] = useState<string | null>(null);
   const [consumeItem, setConsumeItem] = useState("");
   const [consumeQuantity, setConsumeQuantity] = useState("");
-  const [batchCode, setBatchCode] = useState("");
+  const [createdBatch, setCreatedBatch] = useState<CreatedBatch | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -55,6 +58,8 @@ export default function AdminProductionOperations() {
       const result = await getProductionOperations();
       setRuns(result.runs);
       setInventory(result.inventory);
+      setProducts(result.products);
+      setOrders(result.orders);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load production operations.");
     } finally {
@@ -67,16 +72,16 @@ export default function AdminProductionOperations() {
   }, [load]);
 
   async function addRun() {
-    if (!productId.trim()) {
-      setError("Product ID is required.");
+    if (!productId) {
+      setError("Select a product first.");
       return;
     }
 
     try {
       setBusy("create");
       await createProductionRun({
-        productId: productId.trim(),
-        orderId: orderId.trim() || null,
+        productId,
+        orderId: orderId || null,
         plannedQuantity: quantity ? Number(quantity) : null,
         unit: "bottles",
       });
@@ -134,18 +139,18 @@ export default function AdminProductionOperations() {
   }
 
   async function createBatch() {
-    if (!selectedRun || !batchCode.trim()) {
-      setError("Select a production run and enter a batch code.");
+    if (!selectedRun) {
+      setError("Select a production run first.");
       return;
     }
 
     try {
       setBusy("batch");
-      await createBatchFromProduction({
+      setError("");
+      const batch = await createBatchAutomatically({
         productionRunId: selectedRun,
-        batchCode: batchCode.trim(),
       });
-      setBatchCode("");
+      setCreatedBatch(batch);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create batch.");
@@ -221,18 +226,32 @@ export default function AdminProductionOperations() {
           </p>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr_180px_auto]">
-            <input
+            <select
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
-              placeholder="Product UUID"
-              className="border border-black/10 px-4 py-3 text-sm outline-none"
-            />
-            <input
+              className="border border-black/10 bg-white px-4 py-3 text-sm outline-none"
+            >
+              <option value="">Select product</option>
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+
+            <select
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
-              placeholder="Optional order UUID"
-              className="border border-black/10 px-4 py-3 text-sm outline-none"
-            />
+              className="border border-black/10 bg-white px-4 py-3 text-sm outline-none"
+            >
+              <option value="">No linked order / Walk-in</option>
+              {orders.map((order) => (
+                <option key={order.id} value={order.id}>
+                  {order.name || "Order"}
+                  {order.status ? ` — ${label(order.status)}` : ""}
+                </option>
+              ))}
+            </select>
             <input
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
@@ -401,24 +420,57 @@ export default function AdminProductionOperations() {
               </p>
 
               <div className="mt-6 space-y-4">
-                <input
-                  value={batchCode}
-                  onChange={(e) => setBatchCode(e.target.value)}
-                  placeholder="Example: RR-BATCH-20260923-001"
-                  className="w-full border border-black/10 px-4 py-3 text-sm"
-                />
+                <div className="border border-black/10 bg-[#f5f1e8] p-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-black/40">
+                    Automatic numbering
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-black/60">
+                    R&R will generate the next unique batch number for the production date.
+                  </p>
+                  <p className="mt-2 font-mono text-xs text-black/45">
+                    RR-YYYYMMDD-001
+                  </p>
+                </div>
 
                 <button
                   onClick={createBatch}
-                  disabled={busy === "batch"}
-                  className="w-full bg-[#111111] px-5 py-3 text-sm font-medium text-white"
+                  disabled={busy === "batch" || !selectedRun}
+                  className="w-full bg-[#111111] px-5 py-3 text-sm font-medium !text-white disabled:opacity-50"
                 >
                   {busy === "batch" ? "Creating…" : "Create Traceability Batch"}
                 </button>
 
+                {createdBatch && (
+                  <div className="border border-black/10 bg-white p-5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-black/40">
+                      Batch created
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold">
+                      Batch number {createdBatch.batch_code} created.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <a
+                        href={`/admin/batches/qr?batch=${encodeURIComponent(createdBatch.batch_code)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="border border-black bg-black px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] !text-white"
+                      >
+                        Print / View QR
+                      </a>
+                      <a
+                        href={`/trace/${encodeURIComponent(createdBatch.batch_code)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="border border-black/15 px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em]"
+                      >
+                        Open Trace
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs leading-5 text-black/40">
-                  After creation, the public trace page will be available at
-                  <span className="mx-1 font-mono">/trace/&lt;batch-code&gt;</span>.
+                  Each batch receives a QR destination for the public trace page. The QR can be printed on the bottle label or batch sticker.
                 </p>
               </div>
             </div>

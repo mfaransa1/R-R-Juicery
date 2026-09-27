@@ -7,7 +7,7 @@ const areas = [
     number: "01",
     title: "YOUTH",
     text: "A place where younger players can discover the game, build confidence and meet other people who play.",
-    image: "/images/chess/youth.jpg",
+    image: "/images/chess/youth.jpeg",
   },
   {
     number: "02",

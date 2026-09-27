@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 type ErrorPageProps = {
-  error: Error & { digest?: string };
+  error: Error & {
+    digest?: string;
+  };
   reset: () => void;
 };
 
@@ -37,7 +39,7 @@ export default function ErrorPage({
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={() => reset()}
+            onClick={reset}
             className="rr-button rr-button-primary"
           >
             Try again
